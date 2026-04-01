@@ -1,0 +1,10 @@
+# vs
+.vs/
+EnglishLearner/EnglishLearner.vcxproj.user
+
+#Debug
+x64/
+EnglishLearner/x64/
+
+#data
+EnglishLearner/english_learning.db
