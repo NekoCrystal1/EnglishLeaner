@@ -1,0 +1,51 @@
+# Temporary workflow file. Move to .github/workflows/migration.yml to enable GitHub Actions.
+# This workflow runs Flyway migrations against a Postgres service and then executes post_migration_mark.ps1
+
+name: Run DB migrations and mark tasks
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: pass
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U user -d postgres" --health-interval 10s --health-timeout 5s --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Wait for Postgres
+        run: sleep 10
+        shell: bash
+
+      - name: Run Flyway migrations
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: flywayMigrate
+        env:
+          DB_URL: jdbc:postgresql://localhost:5432/postgres
+          DB_USER: user
+          DB_PASS: pass
+
+      - name: Mark implement-repo-layer done
+        run: pwsh ./post_migration_mark.ps1 -TaskId 'implement-repo-layer'
+        shell: pwsh
