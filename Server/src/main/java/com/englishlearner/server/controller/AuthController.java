@@ -23,11 +23,11 @@ public class AuthController {
 
     @PostMapping("/register")
     public ApiResponse<UserProfileResponse> register(@Valid @RequestBody RegisterRequest request) {
-        return ApiResponse.ok("注册成功", authService.register(request));
+        return ApiResponse.ok("register success", authService.register(request));
     }
 
     @PostMapping("/login")
     public ApiResponse<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
-        return ApiResponse.ok("登录成功", authService.login(request));
+        return ApiResponse.ok("login success", authService.login(request));
     }
 }

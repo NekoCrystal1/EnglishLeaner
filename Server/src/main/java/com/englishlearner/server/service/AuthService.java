@@ -28,7 +28,7 @@ public class AuthService {
     public UserProfileResponse register(RegisterRequest request) {
         String username = request.username().trim();
         if (userAccountRepository.existsByUsernameAndDeletedFalse(username)) {
-            throw BusinessException.badRequest("用户名已存在");
+            throw BusinessException.badRequest("account already exists");
         }
 
         UserAccount user = new UserAccount();
@@ -45,10 +45,10 @@ public class AuthService {
     public LoginResponse login(LoginRequest request) {
         String username = request.username().trim();
         UserAccount user = userAccountRepository.findByUsernameAndDeletedFalse(username)
-                .orElseThrow(() -> BusinessException.unauthorized("用户名或密码错误"));
+                .orElseThrow(() -> BusinessException.unauthorized("invalid username or password"));
 
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
-            throw BusinessException.unauthorized("用户名或密码错误");
+            throw BusinessException.unauthorized("invalid username or password");
         }
 
         String token = jwtService.generateToken(user.getId(), user.getUsername());
@@ -57,7 +57,7 @@ public class AuthService {
 
     public UserProfileResponse getCurrentUser(Long userId) {
         UserAccount user = userAccountRepository.findByIdAndDeletedFalse(userId)
-                .orElseThrow(() -> BusinessException.unauthorized("用户不存在或登录已过期"));
+                .orElseThrow(() -> BusinessException.unauthorized("user not found or session expired"));
         return toProfile(user);
     }
 
