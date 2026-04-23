@@ -7,8 +7,8 @@
 class QFrame;
 class QLabel;
 class QProgressBar;
-class QRadioButton;
 class QPushButton;
+class QStackedWidget;
 class QTabWidget;
 class QWidget;
 
@@ -21,10 +21,11 @@ public:
     ~EnglishLearner() override;
 
 private slots:
-    void onSubmit();
-    void onShowRanking();
     void onOpenWordBook();
     void onOpenStudyStatus();
+    void onStartLearn();
+    void onStartReview();
+    void onBackToWordHome();
 
 private:
     void applyTheme();
@@ -33,11 +34,11 @@ private:
     QString generateDailyMeaning() const;
     void updateDailyProgress(int delta);
     void onLoginSuccess(const UserProfile& user);
-    void loadWord();
     void updateScoreDisplay();
-    void clearSelection();
+    QWidget* createWordModePage(const QString& moduleName,
+                                const QString& description,
+                                QPushButton** backButton);
     QWidget* createPlaceholderModule(const QString& moduleName, const QString& description);
-    void setFeedbackText(const QString& text, bool positive);
     QString toDisplayName(const QString& rawUsername) const;
 
 private:
@@ -54,11 +55,14 @@ private:
 
     QTabWidget* navTabs;
 
-    QLabel* labelWord;
-    QRadioButton* radioButtons[4];
-    QPushButton* btnSubmit;
-    QPushButton* btnRanking;
-    QLabel* labelFeedback;
+    QStackedWidget* wordStack;
+    QWidget* wordHomePage;
+    QWidget* wordLearnPage;
+    QWidget* wordReviewPage;
+    QPushButton* btnStartLearn;
+    QPushButton* btnStartReview;
+    QPushButton* btnBackFromLearn;
+    QPushButton* btnBackFromReview;
 
     QProgressBar* progressDaily;
     QLabel* labelProgress;
@@ -66,8 +70,6 @@ private:
 
     ApiClient m_apiClient;
     UserProfile m_currentUser;
-    QuizQuestion m_currentQuestion;
-    QStringList m_currentOptions;
 
     int m_dailyGoal = 20;
     int m_dailyProgress = 0;
