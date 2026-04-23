@@ -8,6 +8,9 @@ Client_QT/EnglishLearner/EnglishLearner.vcxproj.user
 #idea
 Server/.idea/
 
+#gradle
+.gradle_home/
+
 #Debug
 Client_QT/x64/
 Client_QT/EnglishLearner/x64/

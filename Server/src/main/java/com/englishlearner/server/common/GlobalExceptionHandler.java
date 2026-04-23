@@ -19,7 +19,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleValidation(MethodArgumentNotValidException ex) {
         FieldError fieldError = ex.getBindingResult().getFieldErrors().stream().findFirst().orElse(null);
-        String message = fieldError != null ? fieldError.getDefaultMessage() : "请求参数不合法";
+        String message = fieldError != null ? fieldError.getDefaultMessage() : "request validation failed";
         return ResponseEntity.badRequest().body(ApiResponse.fail(message));
     }
 
@@ -31,6 +31,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleOther(Exception ex) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.fail("服务器内部错误，请稍后重试"));
+                .body(ApiResponse.fail("internal server error"));
     }
 }

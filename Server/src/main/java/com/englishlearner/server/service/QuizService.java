@@ -45,7 +45,7 @@ public class QuizService {
     public QuizQuestionResponse nextQuestion() {
         long total = vocabularyRepository.countByDeletedFalse();
         if (total == 0L) {
-            throw BusinessException.notFound("题库为空");
+            throw BusinessException.notFound("no vocabulary available");
         }
 
         int offset = random.nextInt((int) Math.min(total, Integer.MAX_VALUE));
@@ -56,7 +56,7 @@ public class QuizService {
                     PageRequest.of(0, 1, Sort.by(Sort.Direction.ASC, "id")));
         }
         if (page.isEmpty()) {
-            throw BusinessException.notFound("题库为空");
+            throw BusinessException.notFound("no vocabulary available");
         }
 
         Vocabulary vocabulary = page.getContent().get(0);
@@ -66,9 +66,9 @@ public class QuizService {
 
     public SubmitAnswerResponse submitAnswer(Long userId, SubmitAnswerRequest request) {
         UserAccount user = userAccountRepository.findByIdAndDeletedFalse(userId)
-                .orElseThrow(() -> BusinessException.unauthorized("用户不存在或登录已过期"));
+                .orElseThrow(() -> BusinessException.unauthorized("user not found or session expired"));
         Vocabulary vocabulary = vocabularyRepository.findByIdAndDeletedFalse(request.wordId())
-                .orElseThrow(() -> BusinessException.notFound("题目不存在"));
+                .orElseThrow(() -> BusinessException.notFound("question not found"));
 
         String selectedAnswer = request.selectedAnswer().trim();
         boolean correct = vocabulary.getTranslation().equals(selectedAnswer);
@@ -142,7 +142,7 @@ public class QuizService {
             options.add(candidate);
         }
         while (options.size() < OPTION_SIZE) {
-            options.add("未知");
+            options.add("N/A");
         }
         Collections.shuffle(options, random);
         return options;

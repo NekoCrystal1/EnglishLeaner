@@ -82,7 +82,7 @@ bool ApiClient::login(const QString& username, const QString& password,
     }
     if (!dataValue.isObject()) {
         if (errorMessage != nullptr) {
-            *errorMessage = "登录响应格式错误";
+            *errorMessage = QStringLiteral("\u767b\u5f55\u54cd\u5e94\u683c\u5f0f\u9519\u8bef");
         }
         return false;
     }
@@ -91,7 +91,7 @@ bool ApiClient::login(const QString& username, const QString& password,
     const QString jwtToken = data.value("token").toString().trimmed();
     if (jwtToken.isEmpty()) {
         if (errorMessage != nullptr) {
-            *errorMessage = "登录成功但未返回 token";
+            *errorMessage = QStringLiteral("\u767b\u5f55\u6210\u529f\u4f46\u7f3a\u5c11token");
         }
         return false;
     }
@@ -104,7 +104,7 @@ bool ApiClient::login(const QString& username, const QString& password,
     const UserProfile parsedUser = parseUserProfile(data.value("user").toObject());
     if (parsedUser.userId <= 0 || parsedUser.username.isEmpty()) {
         if (errorMessage != nullptr) {
-            *errorMessage = "登录响应缺少用户信息";
+            *errorMessage = QStringLiteral("\u767b\u5f55\u54cd\u5e94\u7f3a\u5c11\u7528\u6237\u4fe1\u606f");
         }
         return false;
     }
@@ -125,7 +125,7 @@ bool ApiClient::fetchCurrentUser(UserProfile* user, QString* errorMessage)
     }
     if (!dataValue.isObject()) {
         if (errorMessage != nullptr) {
-            *errorMessage = "用户信息响应格式错误";
+            *errorMessage = QStringLiteral("\u7528\u6237\u4fe1\u606f\u54cd\u5e94\u683c\u5f0f\u9519\u8bef");
         }
         return false;
     }
@@ -133,7 +133,7 @@ bool ApiClient::fetchCurrentUser(UserProfile* user, QString* errorMessage)
     const UserProfile parsedUser = parseUserProfile(dataValue.toObject());
     if (parsedUser.userId <= 0 || parsedUser.username.isEmpty()) {
         if (errorMessage != nullptr) {
-            *errorMessage = "用户信息不完整";
+            *errorMessage = QStringLiteral("\u7528\u6237\u4fe1\u606f\u4e0d\u5b8c\u6574");
         }
         return false;
     }
@@ -154,7 +154,7 @@ bool ApiClient::fetchNextQuestion(QuizQuestion* question, QString* errorMessage)
     }
     if (!dataValue.isObject()) {
         if (errorMessage != nullptr) {
-            *errorMessage = "题目响应格式错误";
+            *errorMessage = QStringLiteral("\u9898\u76ee\u54cd\u5e94\u683c\u5f0f\u9519\u8bef");
         }
         return false;
     }
@@ -171,7 +171,7 @@ bool ApiClient::fetchNextQuestion(QuizQuestion* question, QString* errorMessage)
 
     if (parsed.wordId <= 0 || parsed.word.isEmpty() || parsed.options.isEmpty()) {
         if (errorMessage != nullptr) {
-            *errorMessage = "题目信息不完整";
+            *errorMessage = QStringLiteral("\u9898\u76ee\u4fe1\u606f\u4e0d\u5b8c\u6574");
         }
         return false;
     }
@@ -198,7 +198,7 @@ bool ApiClient::submitAnswer(qint64 wordId, const QString& selectedAnswer,
     }
     if (!dataValue.isObject()) {
         if (errorMessage != nullptr) {
-            *errorMessage = "答案提交响应格式错误";
+            *errorMessage = QStringLiteral("\u7b54\u6848\u63d0\u4ea4\u54cd\u5e94\u683c\u5f0f\u9519\u8bef");
         }
         return false;
     }
@@ -228,7 +228,7 @@ bool ApiClient::fetchRanking(int limit, QList<RankingItem>* rankings, QString* e
     }
     if (!dataValue.isArray()) {
         if (errorMessage != nullptr) {
-            *errorMessage = "排行榜响应格式错误";
+            *errorMessage = QStringLiteral("\u6392\u884c\u699c\u54cd\u5e94\u683c\u5f0f\u9519\u8bef");
         }
         return false;
     }
@@ -317,9 +317,10 @@ bool ApiClient::parseApiEnvelope(const HttpResult& result, QJsonValue* data, QSt
             if (!result.networkError.isEmpty()) {
                 *errorMessage = result.networkError;
             } else if (!result.rawBody.isEmpty()) {
-                *errorMessage = QString("服务器返回非 JSON 内容（HTTP %1）").arg(result.statusCode);
+                *errorMessage = QStringLiteral("\u670d\u52a1\u5668\u8fd4\u56de\u975eJSON\u5185\u5bb9\uff08HTTP %1\uff09")
+                                    .arg(result.statusCode);
             } else {
-                *errorMessage = QString("请求失败（HTTP %1）").arg(result.statusCode);
+                *errorMessage = QStringLiteral("\u8bf7\u6c42\u5931\u8d25\uff08HTTP %1\uff09").arg(result.statusCode);
             }
         }
         return false;
@@ -336,7 +337,7 @@ bool ApiClient::parseApiEnvelope(const HttpResult& result, QJsonValue* data, QSt
             } else if (!result.networkError.isEmpty()) {
                 *errorMessage = result.networkError;
             } else {
-                *errorMessage = QString("请求失败（HTTP %1）").arg(result.statusCode);
+                *errorMessage = QStringLiteral("\u8bf7\u6c42\u5931\u8d25\uff08HTTP %1\uff09").arg(result.statusCode);
             }
         }
         return false;
