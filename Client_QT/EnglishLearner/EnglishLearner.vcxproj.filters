@@ -32,6 +32,9 @@
     <ClCompile Include="EnglishLearner.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ApiClient.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -48,6 +51,9 @@
     <QtMoc Include="EnglishLearner.h">
       <Filter>Header Files</Filter>
     </QtMoc>
+    <ClInclude Include="ApiClient.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="LoginDialog.ui">

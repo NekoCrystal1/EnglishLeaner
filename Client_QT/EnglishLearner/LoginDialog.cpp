@@ -1,42 +1,57 @@
 ﻿#include "LoginDialog.h"
-#include <QtSql/QSqlQuery>
-#include <QMessageBox>
-#include <QVBoxLayout>
+
+#include <QApplication>
+#include <QFormLayout>
 #include <QHBoxLayout>
 #include <QLabel>
-#include <qsqlerror.h>
+#include <QLineEdit>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QVBoxLayout>
 
-LoginDialog::LoginDialog(QWidget* parent)
+LoginDialog::LoginDialog(ApiClient* apiClient, QWidget* parent)
     : QDialog(parent)
+    , m_apiClient(apiClient)
 {
-    setWindowTitle("登录");
-    setFixedSize(300, 200);
+    setWindowTitle("登录 / 注册");
+    setFixedSize(420, 230);
 
-    // 创建控件
+    QLabel* lblServer = new QLabel("服务地址:", this);
     QLabel* lblUsername = new QLabel("用户名:", this);
     QLabel* lblPassword = new QLabel("密码:", this);
+
+    lineEditServerUrl = new QLineEdit(this);
+    lineEditServerUrl->setPlaceholderText("例如: http://localhost:8080");
+    lineEditServerUrl->setText(m_apiClient != nullptr ? m_apiClient->baseUrl() : "http://localhost:8080");
+
     lineEditUsername = new QLineEdit(this);
     lineEditPassword = new QLineEdit(this);
     lineEditPassword->setEchoMode(QLineEdit::Password);
+    lineEditPassword->setPlaceholderText("至少 6 位");
+
     btnLogin = new QPushButton("登录", this);
     btnRegister = new QPushButton("注册", this);
+    btnLogin->setDefault(true);
 
-    // 布局
-    QGridLayout* gridLayout = new QGridLayout();
-    gridLayout->addWidget(lblUsername, 0, 0);
-    gridLayout->addWidget(lineEditUsername, 0, 1);
-    gridLayout->addWidget(lblPassword, 1, 0);
-    gridLayout->addWidget(lineEditPassword, 1, 1);
+    labelHint = new QLabel("先注册再登录即可开始练习。", this);
+    labelHint->setStyleSheet("color: #555;");
+    labelHint->setWordWrap(true);
+
+    QFormLayout* formLayout = new QFormLayout();
+    formLayout->addRow(lblServer, lineEditServerUrl);
+    formLayout->addRow(lblUsername, lineEditUsername);
+    formLayout->addRow(lblPassword, lineEditPassword);
 
     QHBoxLayout* btnLayout = new QHBoxLayout();
+    btnLayout->addStretch();
     btnLayout->addWidget(btnLogin);
     btnLayout->addWidget(btnRegister);
 
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
-    mainLayout->addLayout(gridLayout);
+    mainLayout->addLayout(formLayout);
+    mainLayout->addWidget(labelHint);
     mainLayout->addLayout(btnLayout);
 
-    // 连接信号槽
     connect(btnLogin, &QPushButton::clicked, this, &LoginDialog::onLogin);
     connect(btnRegister, &QPushButton::clicked, this, &LoginDialog::onRegister);
 }
@@ -47,61 +62,104 @@ LoginDialog::~LoginDialog()
 
 void LoginDialog::onLogin()
 {
-    QString username = lineEditUsername->text().trimmed();
-    QString password = lineEditPassword->text();
+    if (m_apiClient == nullptr) {
+        QMessageBox::critical(this, "错误", "API 客户端未初始化");
+        return;
+    }
 
+    const QString serverUrl = lineEditServerUrl->text().trimmed();
+    const QString username = lineEditUsername->text().trimmed();
+    const QString password = lineEditPassword->text();
+
+    if (serverUrl.isEmpty()) {
+        QMessageBox::warning(this, "提示", "请输入服务地址");
+        return;
+    }
     if (username.isEmpty() || password.isEmpty()) {
         QMessageBox::warning(this, "提示", "用户名和密码不能为空");
         return;
     }
 
-    QSqlQuery query;
-    query.prepare("SELECT user_id, username FROM users WHERE username = ? AND password = ?");
-    query.addBindValue(username);
-    query.addBindValue(password);
+    m_apiClient->setBaseUrl(serverUrl);
 
-    if (query.exec() && query.next()) {
-        int userId = query.value(0).toInt();
-        QString userName = query.value(1).toString();
-        emit loginSuccess(userId, userName);
-        accept();
+    UserProfile profile;
+    QString token;
+    QString errorMessage;
+
+    setBusy(true);
+    const bool ok = m_apiClient->login(username, password, &profile, &token, &errorMessage);
+    setBusy(false);
+
+    if (!ok) {
+        QMessageBox::warning(this, "登录失败", errorMessage);
+        return;
     }
-    else {
-        QMessageBox::warning(this, "错误", "用户名或密码错误");
-    }
+
+    Q_UNUSED(token);
+    m_loggedInUser = profile;
+    accept();
 }
 
 void LoginDialog::onRegister()
 {
-    QString username = lineEditUsername->text().trimmed();
-    QString password = lineEditPassword->text();
+    if (m_apiClient == nullptr) {
+        QMessageBox::critical(this, "错误", "API 客户端未初始化");
+        return;
+    }
 
+    const QString serverUrl = lineEditServerUrl->text().trimmed();
+    const QString username = lineEditUsername->text().trimmed();
+    const QString password = lineEditPassword->text();
+
+    if (serverUrl.isEmpty()) {
+        QMessageBox::warning(this, "提示", "请输入服务地址");
+        return;
+    }
     if (username.isEmpty() || password.isEmpty()) {
         QMessageBox::warning(this, "提示", "用户名和密码不能为空");
         return;
     }
-
-    QSqlQuery check;
-    check.prepare("SELECT user_id FROM users WHERE username = ?");
-    check.addBindValue(username);
-    check.exec();
-
-    if (check.next()) {
-        QMessageBox::warning(this, "错误", "用户名已存在");
+    if (username.size() < 2 || username.size() > 32) {
+        QMessageBox::warning(this, "提示", "用户名长度需在 2~32 之间");
+        return;
+    }
+    if (password.size() < 6 || password.size() > 64) {
+        QMessageBox::warning(this, "提示", "密码长度需在 6~64 之间");
         return;
     }
 
-    QSqlQuery insert;
-    insert.prepare("INSERT INTO users (username, password) VALUES (?, ?)");
-    insert.addBindValue(username);
-    insert.addBindValue(password);
+    m_apiClient->setBaseUrl(serverUrl);
 
-    if (insert.exec()) {
-        QMessageBox::information(this, "成功", "注册成功，请登录");
-        lineEditUsername->clear();
-        lineEditPassword->clear();
+    QString errorMessage;
+    setBusy(true);
+    const bool ok = m_apiClient->registerUser(username, password, &errorMessage);
+    setBusy(false);
+
+    if (!ok) {
+        QMessageBox::warning(this, "注册失败", errorMessage);
+        return;
     }
-    else {
-        QMessageBox::critical(this, "错误", "注册失败：" + insert.lastError().text());
+
+    QMessageBox::information(this, "注册成功", "账号已创建，请直接登录。");
+    lineEditPassword->clear();
+}
+
+UserProfile LoginDialog::loggedInUser() const
+{
+    return m_loggedInUser;
+}
+
+void LoginDialog::setBusy(bool busy)
+{
+    btnLogin->setEnabled(!busy);
+    btnRegister->setEnabled(!busy);
+    lineEditServerUrl->setEnabled(!busy);
+    lineEditUsername->setEnabled(!busy);
+    lineEditPassword->setEnabled(!busy);
+
+    if (busy) {
+        QApplication::setOverrideCursor(Qt::BusyCursor);
+    } else {
+        QApplication::restoreOverrideCursor();
     }
 }

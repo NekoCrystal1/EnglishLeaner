@@ -1,28 +1,37 @@
 #pragma once
-#include <QtWidgets/QDialog>
-#include <QtWidgets/QLineEdit>
-#include <QtWidgets/QPushButton>
-#include <QtWidgets/QLabel>
-#include <QtWidgets/QVBoxLayout>
+#include <QDialog>
+
+#include "ApiClient.h"
+
+class QLineEdit;
+class QPushButton;
+class QLabel;
 
 class LoginDialog : public QDialog
 {
     Q_OBJECT
 
 public:
-    LoginDialog(QWidget* parent = nullptr);
-    ~LoginDialog();
+    explicit LoginDialog(ApiClient* apiClient, QWidget* parent = nullptr);
+    ~LoginDialog() override;
 
-signals:
-    void loginSuccess(int userId, QString username);
+    UserProfile loggedInUser() const;
 
 private slots:
     void onLogin();
     void onRegister();
 
 private:
+    void setBusy(bool busy);
+
+private:
+    ApiClient* m_apiClient;
+    UserProfile m_loggedInUser;
+
+    QLineEdit* lineEditServerUrl;
     QLineEdit* lineEditUsername;
     QLineEdit* lineEditPassword;
     QPushButton* btnLogin;
     QPushButton* btnRegister;
+    QLabel* labelHint;
 };
