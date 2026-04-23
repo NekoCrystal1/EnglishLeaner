@@ -2,21 +2,15 @@
 
 #include "LoginDialog.h"
 
-#include <QAbstractItemView>
-#include <QColor>
 #include <QDate>
-#include <QDialog>
 #include <QFrame>
-#include <QHeaderView>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QMessageBox>
 #include <QPalette>
 #include <QProgressBar>
 #include <QPushButton>
-#include <QRadioButton>
-#include <QTableWidget>
-#include <QTableWidgetItem>
+#include <QStackedWidget>
 #include <QTabWidget>
 #include <QTimer>
 #include <QVBoxLayout>
@@ -105,67 +99,73 @@ EnglishLearner::EnglishLearner(QWidget* parent)
     heroLayout->addWidget(labelDailyMeaning);
     wordLayout->addWidget(heroFrame);
 
-    QFrame* quizCard = new QFrame(wordModule);
-    quizCard->setObjectName("card");
-    QVBoxLayout* quizLayout = new QVBoxLayout(quizCard);
-    quizLayout->setContentsMargins(16, 16, 16, 16);
-    quizLayout->setSpacing(12);
+    wordStack = new QStackedWidget(wordModule);
+    wordStack->setObjectName("wordStack");
 
-    labelWord = new QLabel(QStringLiteral("\u8bf7\u5148\u767b\u5f55"), quizCard);
-    labelWord->setObjectName("wordLabel");
-    labelWord->setAlignment(Qt::AlignCenter);
-    labelWord->setMinimumHeight(84);
-    quizLayout->addWidget(labelWord);
+    wordHomePage = new QWidget(wordStack);
+    QVBoxLayout* homeLayout = new QVBoxLayout(wordHomePage);
+    homeLayout->setContentsMargins(0, 0, 0, 0);
+    homeLayout->setSpacing(12);
 
-    for (int i = 0; i < 4; ++i) {
-        radioButtons[i] = new QRadioButton(quizCard);
-        radioButtons[i]->setObjectName("optionButton");
-        radioButtons[i]->setEnabled(false);
-        quizLayout->addWidget(radioButtons[i]);
-    }
+    QFrame* actionCard = new QFrame(wordHomePage);
+    actionCard->setObjectName("entryActionCard");
+    QVBoxLayout* actionLayout = new QVBoxLayout(actionCard);
+    actionLayout->setContentsMargins(16, 16, 16, 16);
+    actionLayout->setSpacing(10);
 
-    QHBoxLayout* actionLayout = new QHBoxLayout();
-    btnSubmit = new QPushButton(QStringLiteral("\u63d0\u4ea4\u7b54\u6848"), quizCard);
-    btnSubmit->setObjectName("primaryButton");
-    btnSubmit->setEnabled(false);
-    btnRanking = new QPushButton(QStringLiteral("\u6392\u884c\u699c"), quizCard);
-    btnRanking->setObjectName("secondaryButton");
-    actionLayout->addWidget(btnSubmit);
-    actionLayout->addWidget(btnRanking);
-    quizLayout->addLayout(actionLayout);
+    QLabel* actionTitle = new QLabel(QStringLiteral("\u5355\u8bcd\u5b66\u4e60\u5165\u53e3"), actionCard);
+    actionTitle->setObjectName("sectionTitle");
+    actionLayout->addWidget(actionTitle);
 
-    labelFeedback = new QLabel(quizCard);
-    labelFeedback->setObjectName("feedbackText");
-    labelFeedback->setAlignment(Qt::AlignCenter);
-    labelFeedback->setWordWrap(true);
-    quizLayout->addWidget(labelFeedback);
-
-    wordLayout->addWidget(quizCard);
-
-    QFrame* progressCard = new QFrame(wordModule);
-    progressCard->setObjectName("card");
-    QVBoxLayout* progressLayout = new QVBoxLayout(progressCard);
-    progressLayout->setContentsMargins(16, 12, 16, 12);
-    progressLayout->setSpacing(8);
-
-    QLabel* progressTitle = new QLabel(QStringLiteral("\u6bcf\u65e5\u8fdb\u5ea6"), progressCard);
-    progressTitle->setObjectName("sectionTitle");
-    progressLayout->addWidget(progressTitle);
-
-    progressDaily = new QProgressBar(progressCard);
+    progressDaily = new QProgressBar(actionCard);
     progressDaily->setRange(0, m_dailyGoal);
     progressDaily->setValue(0);
     progressDaily->setFormat("%v / %m");
-    progressLayout->addWidget(progressDaily);
+    actionLayout->addWidget(progressDaily);
 
-    labelProgress = new QLabel(progressCard);
+    labelProgress = new QLabel(actionCard);
     labelProgress->setObjectName("progressText");
-    labelGoal = new QLabel(progressCard);
+    labelGoal = new QLabel(actionCard);
     labelGoal->setObjectName("progressHint");
     labelGoal->setWordWrap(true);
-    progressLayout->addWidget(labelProgress);
-    progressLayout->addWidget(labelGoal);
-    wordLayout->addWidget(progressCard);
+    actionLayout->addWidget(labelProgress);
+    actionLayout->addWidget(labelGoal);
+
+    QHBoxLayout* modeLayout = new QHBoxLayout();
+    modeLayout->setSpacing(10);
+    btnStartLearn = new QPushButton(QStringLiteral("\u5b66\u4e60"), actionCard);
+    btnStartLearn->setObjectName("modeLearnButton");
+    btnStartReview = new QPushButton(QStringLiteral("\u590d\u4e60"), actionCard);
+    btnStartReview->setObjectName("modeReviewButton");
+    modeLayout->addWidget(btnStartLearn);
+    modeLayout->addWidget(btnStartReview);
+    actionLayout->addLayout(modeLayout);
+
+    QLabel* actionHint = new QLabel(
+        QStringLiteral("\u70b9\u51fb\u201c\u5b66\u4e60\u201d\u6216\u201c\u590d\u4e60\u201d\u540e\u624d\u4f1a\u8fdb\u5165\u5bf9\u5e94\u5355\u8bcd\u9875\u9762\u3002"),
+        actionCard);
+    actionHint->setObjectName("progressHint");
+    actionHint->setWordWrap(true);
+    actionLayout->addWidget(actionHint);
+
+    homeLayout->addWidget(actionCard);
+    homeLayout->addStretch();
+
+    wordLearnPage = createWordModePage(
+        QStringLiteral("\u5b66\u4e60\u9875\u9762"),
+        QStringLiteral("\u8fd9\u91cc\u662f\u201c\u5b66\u4e60\u201d\u7684\u5bf9\u5e94\u9875\u9762\u3002\n\u65e7\u7684\u767b\u5f55\u540e\u7acb\u5373\u505a\u9898\u529f\u80fd\u5df2\u79fb\u9664\uff0c\u540e\u7eed\u518d\u63a5\u5165\u4e60\u9898\u3002"),
+        &btnBackFromLearn);
+    wordReviewPage = createWordModePage(
+        QStringLiteral("\u590d\u4e60\u9875\u9762"),
+        QStringLiteral("\u8fd9\u91cc\u662f\u201c\u590d\u4e60\u201d\u7684\u5bf9\u5e94\u9875\u9762\u3002\n\u65e7\u7684\u767b\u5f55\u540e\u7acb\u5373\u505a\u9898\u529f\u80fd\u5df2\u79fb\u9664\uff0c\u540e\u7eed\u518d\u63a5\u5165\u4e60\u9898\u3002"),
+        &btnBackFromReview);
+
+    wordStack->addWidget(wordHomePage);
+    wordStack->addWidget(wordLearnPage);
+    wordStack->addWidget(wordReviewPage);
+    wordStack->setCurrentWidget(wordHomePage);
+
+    wordLayout->addWidget(wordStack, 1);
 
     navTabs->addTab(wordModule, QStringLiteral("\u8bcd\u6c47"));
     navTabs->addTab(createPlaceholderModule(
@@ -177,10 +177,12 @@ EnglishLearner::EnglishLearner(QWidget* parent)
                         QStringLiteral("\u8be5\u6a21\u5757\u5df2\u9884\u7559\uff0c\u53ef\u63a5\u5165\u5206\u7ea7\u9605\u8bfb\u3001\u9898\u76ee\u8bb2\u89e3\u548c\u9519\u9898\u590d\u76d8\u3002")),
                     QStringLiteral("\u9605\u8bfb"));
 
-    connect(btnSubmit, &QPushButton::clicked, this, &EnglishLearner::onSubmit);
-    connect(btnRanking, &QPushButton::clicked, this, &EnglishLearner::onShowRanking);
     connect(btnWordBook, &QPushButton::clicked, this, &EnglishLearner::onOpenWordBook);
     connect(btnStudyStatus, &QPushButton::clicked, this, &EnglishLearner::onOpenStudyStatus);
+    connect(btnStartLearn, &QPushButton::clicked, this, &EnglishLearner::onStartLearn);
+    connect(btnStartReview, &QPushButton::clicked, this, &EnglishLearner::onStartReview);
+    connect(btnBackFromLearn, &QPushButton::clicked, this, &EnglishLearner::onBackToWordHome);
+    connect(btnBackFromReview, &QPushButton::clicked, this, &EnglishLearner::onBackToWordHome);
 
     applyTheme();
     updateDailyVisual();
@@ -212,6 +214,7 @@ void EnglishLearner::applyTheme()
     const QString tabNormal = darkMode ? "#22314d" : "#f0f4ff";
     const QString tabHover = darkMode ? "#2c4064" : "#e4ebff";
     const QString tabActive = darkMode ? "#2e4978" : "#dfe8ff";
+    const QString entryCardBg = darkMode ? "#202f49" : "#f6f9ff";
 
     setStyleSheet(QString(R"(
 QWidget#rootPanel {
@@ -224,6 +227,11 @@ QWidget#rootPanel {
 QFrame#headerCard,
 QFrame#card {
     background: %3;
+    border: 1px solid %4;
+    border-radius: 14px;
+}
+QFrame#entryActionCard {
+    background: %11;
     border: 1px solid %4;
     border-radius: 14px;
 }
@@ -247,14 +255,6 @@ QLabel#sectionTitle {
     font-size: 16px;
     font-weight: 600;
 }
-QLabel#wordLabel {
-    font-size: 38px;
-    font-weight: 700;
-}
-QLabel#feedbackText {
-    min-height: 26px;
-    color: %6;
-}
 QLabel#progressText {
     font-size: 13px;
 }
@@ -266,27 +266,33 @@ QLabel#moduleDescription {
 QPushButton#primaryButton,
 QPushButton#secondaryButton,
 QPushButton#ghostButton,
-QPushButton#pillButton {
+QPushButton#pillButton,
+QPushButton#modeLearnButton,
+QPushButton#modeReviewButton {
     border-radius: 11px;
     padding: 8px 14px;
     font-weight: 600;
 }
-QPushButton#primaryButton {
+QPushButton#primaryButton,
+QPushButton#modeLearnButton {
     border: none;
     background: %7;
     color: white;
 }
-QPushButton#primaryButton:hover {
+QPushButton#primaryButton:hover,
+QPushButton#modeLearnButton:hover {
     background: #4f87f9;
 }
 QPushButton#secondaryButton,
-QPushButton#ghostButton {
+QPushButton#ghostButton,
+QPushButton#modeReviewButton {
     border: 1px solid %4;
     background: transparent;
     color: %5;
 }
 QPushButton#secondaryButton:hover,
-QPushButton#ghostButton:hover {
+QPushButton#ghostButton:hover,
+QPushButton#modeReviewButton:hover {
     background: %9;
 }
 QPushButton#pillButton {
@@ -301,29 +307,6 @@ QPushButton:disabled {
     background: #d5dceb;
     border-color: #d5dceb;
     color: #98a3bc;
-}
-QRadioButton#optionButton {
-    border: 1px solid %4;
-    border-radius: 10px;
-    padding: 8px 10px;
-    background: transparent;
-}
-QRadioButton#optionButton:hover {
-    background: %9;
-}
-QRadioButton#optionButton::indicator {
-    width: 16px;
-    height: 16px;
-}
-QRadioButton#optionButton::indicator:unchecked {
-    border: 2px solid %4;
-    border-radius: 8px;
-    background: transparent;
-}
-QRadioButton#optionButton::indicator:checked {
-    border: 2px solid %7;
-    border-radius: 8px;
-    background: %7;
 }
 QProgressBar {
     border: 1px solid %4;
@@ -362,7 +345,7 @@ QTabWidget#navTabs QTabBar::tab:selected {
 }
 )")
         .arg(rootStart, rootEnd, cardColor, borderColor, textColor, mutedColor, accent,
-             tabNormal, tabHover, tabActive));
+             tabNormal, tabHover, tabActive, entryCardBg));
 }
 
 void EnglishLearner::updateDailyVisual()
@@ -446,7 +429,7 @@ void EnglishLearner::updateDailyProgress(int delta)
             .arg(m_dailyGoal)
             .arg(reviewProgress)
             .arg(reviewGoal));
-    labelGoal->setText(QStringLiteral("\u5efa\u8bae\uff1a\u5b8c\u6210\u5355\u8bcd\u76ee\u6807\u540e\u53ef\u7ee7\u7eed\u542c\u8bf4\u6216\u9605\u8bfb\u8bad\u7ec3\u3002"));
+    labelGoal->setText(QStringLiteral("\u8fdb\u5ea6\u4e0e\u5165\u53e3\u5df2\u5408\u5e76\uff0c\u8bf7\u5728\u6b64\u6309\u94ae\u4e2d\u9009\u62e9\u201c\u5b66\u4e60\u201d\u6216\u201c\u590d\u4e60\u201d\u3002"));
 }
 
 void EnglishLearner::onLoginSuccess(const UserProfile& user)
@@ -458,82 +441,7 @@ void EnglishLearner::onLoginSuccess(const UserProfile& user)
     labelWelcome->setText(QStringLiteral("\u6b22\u8fce\uff0c%1").arg(toDisplayName(m_currentUser.username)));
     updateScoreDisplay();
     updateDailyProgress(0);
-    loadWord();
-}
-
-void EnglishLearner::loadWord()
-{
-    QString errorMessage;
-    QuizQuestion question;
-    if (!m_apiClient.fetchNextQuestion(&question, &errorMessage)) {
-        labelWord->setText(QStringLiteral("\u9898\u76ee\u52a0\u8f7d\u5931\u8d25"));
-        setFeedbackText(errorMessage, false);
-        btnSubmit->setEnabled(false);
-        for (QRadioButton* button : radioButtons) {
-            button->setEnabled(false);
-            button->setText(QString());
-        }
-        return;
-    }
-
-    m_currentQuestion = question;
-    m_currentOptions = question.options;
-    labelWord->setText(m_currentQuestion.word);
-
-    for (int i = 0; i < 4; ++i) {
-        if (i < m_currentOptions.size()) {
-            radioButtons[i]->setText(QString("%1. %2").arg(QChar('A' + i)).arg(m_currentOptions[i]));
-            radioButtons[i]->setEnabled(true);
-        } else {
-            radioButtons[i]->setText(QString());
-            radioButtons[i]->setEnabled(false);
-        }
-    }
-
-    clearSelection();
-    setFeedbackText(QString(), false);
-    btnSubmit->setEnabled(true);
-}
-
-void EnglishLearner::onSubmit()
-{
-    int selectedIndex = -1;
-    for (int i = 0; i < 4; ++i) {
-        if (radioButtons[i]->isChecked()) {
-            selectedIndex = i;
-            break;
-        }
-    }
-
-    if (selectedIndex < 0 || selectedIndex >= m_currentOptions.size()) {
-        QMessageBox::warning(this, QStringLiteral("\u8f93\u5165\u63d0\u793a"), QStringLiteral("\u8bf7\u9009\u62e9\u4e00\u4e2a\u7b54\u6848\u3002"));
-        return;
-    }
-
-    const QString selectedAnswer = m_currentOptions[selectedIndex];
-    QString errorMessage;
-    SubmitAnswerResult submitResult;
-    btnSubmit->setEnabled(false);
-
-    if (!m_apiClient.submitAnswer(m_currentQuestion.wordId, selectedAnswer, &submitResult, &errorMessage)) {
-        btnSubmit->setEnabled(true);
-        QMessageBox::warning(this, QStringLiteral("\u63d0\u4ea4\u5931\u8d25"), errorMessage);
-        return;
-    }
-
-    m_currentUser.totalScore = submitResult.totalScore;
-    updateScoreDisplay();
-    updateDailyProgress(1);
-
-    if (submitResult.correct) {
-        setFeedbackText(QStringLiteral("\u56de\u7b54\u6b63\u786e\uff0c+%1 \u5206").arg(submitResult.scoreDelta), true);
-    } else {
-        setFeedbackText(QStringLiteral("\u56de\u7b54\u9519\u8bef\uff0c\u6b63\u786e\u7b54\u6848\uff1a%1").arg(submitResult.correctAnswer), false);
-    }
-
-    QTimer::singleShot(1200, this, [this]() {
-        loadWord();
-    });
+    wordStack->setCurrentWidget(wordHomePage);
 }
 
 void EnglishLearner::updateScoreDisplay()
@@ -543,63 +451,41 @@ void EnglishLearner::updateScoreDisplay()
                             .arg(qMax(1, m_currentUser.studyDays)));
 }
 
-void EnglishLearner::onShowRanking()
+QWidget* EnglishLearner::createWordModePage(const QString& moduleName,
+                                            const QString& description,
+                                            QPushButton** backButton)
 {
-    QString errorMessage;
-    QList<RankingItem> rankings;
-    if (!m_apiClient.fetchRanking(10, &rankings, &errorMessage)) {
-        QMessageBox::warning(this, QStringLiteral("\u6392\u884c\u699c"), errorMessage);
-        return;
+    QWidget* page = new QWidget(wordStack);
+    QVBoxLayout* pageLayout = new QVBoxLayout(page);
+    pageLayout->setContentsMargins(0, 0, 0, 0);
+    pageLayout->setSpacing(12);
+
+    QFrame* card = new QFrame(page);
+    card->setObjectName("card");
+    QVBoxLayout* cardLayout = new QVBoxLayout(card);
+    cardLayout->setContentsMargins(16, 16, 16, 16);
+    cardLayout->setSpacing(10);
+
+    QLabel* title = new QLabel(moduleName, card);
+    title->setObjectName("moduleTitle");
+    cardLayout->addWidget(title);
+
+    QLabel* desc = new QLabel(description, card);
+    desc->setObjectName("moduleDescription");
+    desc->setWordWrap(true);
+    cardLayout->addWidget(desc);
+
+    QPushButton* button = new QPushButton(QStringLiteral("\u8fd4\u56de\u5355\u8bcd\u5165\u53e3"), card);
+    button->setObjectName("secondaryButton");
+    cardLayout->addWidget(button);
+
+    if (backButton != nullptr) {
+        *backButton = button;
     }
 
-    QDialog rankDialog(this);
-    rankDialog.setWindowTitle(QStringLiteral("\u6392\u884c\u699c"));
-    rankDialog.resize(460, 360);
-
-    QVBoxLayout* layout = new QVBoxLayout(&rankDialog);
-
-    QTableWidget* table = new QTableWidget(&rankDialog);
-    table->setColumnCount(3);
-    table->setHorizontalHeaderLabels(QStringList()
-                                     << QStringLiteral("\u6392\u540d")
-                                     << QStringLiteral("\u7528\u6237")
-                                     << QStringLiteral("\u79ef\u5206"));
-    table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-    table->verticalHeader()->setVisible(false);
-    table->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    table->setSelectionMode(QAbstractItemView::NoSelection);
-    table->setAlternatingRowColors(true);
-    table->setRowCount(rankings.size());
-
-    for (int row = 0; row < rankings.size(); ++row) {
-        const RankingItem& item = rankings[row];
-
-        QTableWidgetItem* rankItem = new QTableWidgetItem(QString::number(item.rank));
-        rankItem->setTextAlignment(Qt::AlignCenter);
-        table->setItem(row, 0, rankItem);
-
-        QTableWidgetItem* userItem = new QTableWidgetItem(toDisplayName(item.username));
-        table->setItem(row, 1, userItem);
-
-        QTableWidgetItem* scoreItem = new QTableWidgetItem(QString::number(item.totalScore));
-        scoreItem->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
-        table->setItem(row, 2, scoreItem);
-
-        if (item.userId == m_currentUser.userId) {
-            rankItem->setBackground(QColor("#dff0ff"));
-            userItem->setBackground(QColor("#dff0ff"));
-            scoreItem->setBackground(QColor("#dff0ff"));
-        }
-    }
-
-    layout->addWidget(table);
-
-    QPushButton* closeButton = new QPushButton(QStringLiteral("\u5173\u95ed"), &rankDialog);
-    closeButton->setObjectName("secondaryButton");
-    layout->addWidget(closeButton);
-    connect(closeButton, &QPushButton::clicked, &rankDialog, &QDialog::accept);
-
-    rankDialog.exec();
+    pageLayout->addWidget(card);
+    pageLayout->addStretch();
+    return page;
 }
 
 void EnglishLearner::onOpenWordBook()
@@ -618,6 +504,21 @@ void EnglishLearner::onOpenStudyStatus()
         QStringLiteral("\u5b66\u4e60\u72b6\u6001"),
         QStringLiteral("\u5f53\u524d\u677f\u5757\uff1a%1\n\u8be5\u9875\u9762\u5df2\u9884\u7559\uff0c\u53ef\u63a5\u5165\u5b66\u4e60\u66f2\u7ebf\u3001\u5b8c\u6210\u7387\u548c\u9519\u9898\u7edf\u8ba1\u3002")
             .arg(moduleName));
+}
+
+void EnglishLearner::onStartLearn()
+{
+    wordStack->setCurrentWidget(wordLearnPage);
+}
+
+void EnglishLearner::onStartReview()
+{
+    wordStack->setCurrentWidget(wordReviewPage);
+}
+
+void EnglishLearner::onBackToWordHome()
+{
+    wordStack->setCurrentWidget(wordHomePage);
 }
 
 QWidget* EnglishLearner::createPlaceholderModule(const QString& moduleName, const QString& description)
@@ -655,19 +556,6 @@ QWidget* EnglishLearner::createPlaceholderModule(const QString& moduleName, cons
     return page;
 }
 
-void EnglishLearner::setFeedbackText(const QString& text, bool positive)
-{
-    labelFeedback->setText(text);
-    if (text.isEmpty()) {
-        labelFeedback->setStyleSheet("color: #6b7b98;");
-        return;
-    }
-
-    labelFeedback->setStyleSheet(positive
-                                     ? "color: #1c9a57; font-weight: 600;"
-                                     : "color: #d14d57; font-weight: 600;");
-}
-
 QString EnglishLearner::toDisplayName(const QString& rawUsername) const
 {
     const int sep = rawUsername.indexOf(':');
@@ -694,13 +582,4 @@ QString EnglishLearner::toDisplayName(const QString& rawUsername) const
         return QStringLiteral("\u90ae\u7bb1(%1)").arg(account);
     }
     return account;
-}
-
-void EnglishLearner::clearSelection()
-{
-    for (QRadioButton* button : radioButtons) {
-        button->setAutoExclusive(false);
-        button->setChecked(false);
-        button->setAutoExclusive(true);
-    }
 }
