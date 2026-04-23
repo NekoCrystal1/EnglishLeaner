@@ -22,3 +22,8 @@ Server/.gradle/
 Server/build/
 Server/data/
 Server/*.log
+
+# web
+Web/node_modules/
+Web/dist/
+Web/.env
