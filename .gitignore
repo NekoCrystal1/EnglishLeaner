@@ -2,6 +2,9 @@
 Client_QT/.vs/
 Client_QT/EnglishLearner/EnglishLearner.vcxproj.user
 
+# vscode
+.vscode/
+
 #Debug
 Client_QT/x64/
 Client_QT/EnglishLearner/x64/
