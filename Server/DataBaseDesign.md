@@ -454,8 +454,8 @@ erDiagram
 | `V4__content_book_schema.sql` | 创建 `book`、`book_item`、`vocabulary_word`、`book_word`、`media_asset`；迁移 `vocabulary` 数据 |
 | `V5__word_learning_schema.sql` | 创建 `user_word_plan`、`user_word_state`、`word_study_event`；将 `study_log` 作为历史兼容表或迁移到事件表 |
 | `V6__question_bank_schema.sql` | 创建 `question`、`question_option`、`question_attempt`、`wrong_answer`、`favorite_item` |
-| `V7__extended_learning_modules.sql` | 创建阅读、听力、口语相关表，支持后台统一录入和客户端本地导入 |
-| `V8__gamification_stats_sync.sql` | 创建打卡、成就、积分流水、日汇总、小组/同桌、排行榜快照和同步明细表 |
+| `V7__extended_learning_and_share_schema.sql` | 创建内容分享、阅读、听力、口语相关表，支持后台统一录入、客户端本地导入和客户端之间分享传输 |
+| `V8__community_leaderboard_schema.sql` | 创建小组/同桌、打卡、成就和多范围排行榜快照表 |
 | `V9__admin_tag_knowledge_schema.sql` | 创建管理、标签、知识点和推荐预留表 |
 
 兼容策略：
@@ -481,7 +481,7 @@ erDiagram
 | `question_attempt` | `uk_question_attempt_client`、`idx_question_attempt_user_time`、`idx_question_attempt_question` |
 | `daily_study_summary` | `uk_daily_user_date` |
 | `checkin_record` | `uk_checkin_user_date` |
-| `study_group` | `uk_study_group_invite_code`、`idx_study_group_owner` |
+| `study_group` | `idx_study_group_invite_code`、`idx_study_group_owner` |
 | `study_group_member` | `uk_group_member`、`idx_group_member_user` |
 | `study_partner` | `uk_study_partner_pair`、`idx_study_partner_user` |
 | `leaderboard_snapshot` | `idx_leaderboard_scope_period`、`idx_leaderboard_user` |

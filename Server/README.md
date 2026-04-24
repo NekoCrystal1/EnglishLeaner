@@ -47,6 +47,9 @@
 - `V3__expand_user_auth.sql`：扩展用户认证、画像、设备、邮箱验证、通知记录。
 - `V4__content_book_schema.sql`：新增书籍/词书/单词表，并迁移旧 `vocabulary` 测试数据。
 - `V5__word_learning_schema.sql`：新增单词计划、单词状态、学习事件、积分流水和每日汇总。
+- `V6__question_bank_schema.sql`：新增统一题库、题目选项、答题记录、错题集和收藏。
+- `V7__extended_learning_and_share_schema.sql`：新增内容分享、阅读、听力、口语和语音评测预留表。
+- `V8__community_leaderboard_schema.sql`：新增小组/同桌、打卡、成就和多范围排行榜快照表。
 
 ## 本地启动
 
