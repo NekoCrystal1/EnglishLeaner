@@ -31,3 +31,46 @@ export const rankingApi = {
     });
   }
 };
+
+export const bookApi = {
+  list(bookType) {
+    return http.get("/books", {
+      params: bookType ? { bookType } : {}
+    });
+  },
+  create(payload) {
+    return http.post("/books", payload);
+  },
+  detail(bookId) {
+    return http.get(`/books/${bookId}`);
+  },
+  words(bookId) {
+    return http.get(`/books/${bookId}/words`);
+  }
+};
+
+export const wordLearningApi = {
+  listPlans() {
+    return http.get("/word-learning/plans");
+  },
+  currentPlan() {
+    return http.get("/word-learning/plans/current");
+  },
+  createPlan(payload) {
+    return http.post("/word-learning/plans", payload);
+  },
+  updatePlan(planId, payload) {
+    return http.put(`/word-learning/plans/${planId}`, payload);
+  },
+  dueWords(planId) {
+    return http.get("/word-learning/due-words", {
+      params: planId ? { planId } : {}
+    });
+  },
+  submitEvent(payload) {
+    return http.post("/word-learning/events", payload);
+  },
+  todaySummary() {
+    return http.get("/word-learning/summary/today");
+  }
+};
