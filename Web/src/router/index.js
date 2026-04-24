@@ -4,6 +4,7 @@ import { useAuthStore } from "../stores/auth";
 
 const AuthPage = () => import("../pages/AuthPage.vue");
 const HomePage = () => import("../pages/HomePage.vue");
+const WordsPage = () => import("../pages/WordsPage.vue");
 const QuizPage = () => import("../pages/QuizPage.vue");
 const RankingPage = () => import("../pages/RankingPage.vue");
 
@@ -24,6 +25,11 @@ export const router = createRouter({
           path: "",
           name: "home",
           component: HomePage
+        },
+        {
+          path: "words",
+          name: "words",
+          component: WordsPage
         },
         {
           path: "quiz",

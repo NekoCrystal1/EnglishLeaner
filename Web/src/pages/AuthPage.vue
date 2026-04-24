@@ -1,24 +1,21 @@
 <template>
   <div class="auth-page">
-    <section class="hero-card">
+    <section class="brand-panel">
+      <div class="brand-badge">English Learner</div>
       <h1>交互式英语自学系统</h1>
-      <p>支持账号登录、在线刷题、实时积分与排行榜。</p>
-      <div class="hero-tags">
-        <el-tag type="primary">JWT 鉴权</el-tag>
-        <el-tag type="success">实时积分</el-tag>
-        <el-tag type="warning">Web 轻量入口</el-tag>
-      </div>
+      <p>从今天的单词、刷题和积分开始，稳稳往前走。</p>
     </section>
 
-    <section class="form-card">
+    <section class="form-panel">
       <el-tabs v-model="activeTab" stretch>
         <el-tab-pane label="登录" name="login">
           <el-form ref="loginFormRef" :model="loginForm" :rules="loginRules" label-position="top">
             <el-form-item prop="username" label="用户名">
               <el-input
-                v-model="loginForm.username"
+                v-model.trim="loginForm.username"
                 placeholder="请输入用户名"
                 clearable
+                autocomplete="username"
                 @keyup.enter="submitLogin"
               />
             </el-form-item>
@@ -28,6 +25,7 @@
                 placeholder="请输入密码"
                 type="password"
                 show-password
+                autocomplete="current-password"
                 @keyup.enter="submitLogin"
               />
             </el-form-item>
@@ -40,16 +38,28 @@
         <el-tab-pane label="注册" name="register">
           <el-form ref="registerFormRef" :model="registerForm" :rules="registerRules" label-position="top">
             <el-form-item prop="username" label="用户名">
-              <el-input v-model="registerForm.username" placeholder="2-32 个字符" clearable />
+              <el-input
+                v-model.trim="registerForm.username"
+                placeholder="2-32 个字符"
+                clearable
+                autocomplete="username"
+              />
             </el-form-item>
             <el-form-item prop="password" label="密码">
-              <el-input v-model="registerForm.password" type="password" show-password placeholder="6-64 个字符" />
+              <el-input
+                v-model="registerForm.password"
+                type="password"
+                show-password
+                placeholder="6-64 个字符"
+                autocomplete="new-password"
+              />
             </el-form-item>
             <el-form-item prop="confirmPassword" label="确认密码">
               <el-input
                 v-model="registerForm.confirmPassword"
                 type="password"
                 show-password
+                autocomplete="new-password"
                 @keyup.enter="submitRegister"
               />
             </el-form-item>
@@ -97,22 +107,18 @@ const redirectPath = computed(() => {
 });
 
 const loginRules = {
-  username: [
-    { required: true, message: "请输入用户名", trigger: "blur" }
-  ],
-  password: [
-    { required: true, message: "请输入密码", trigger: "blur" }
-  ]
+  username: [{ required: true, message: "请输入用户名", trigger: "blur" }],
+  password: [{ required: true, message: "请输入密码", trigger: "blur" }]
 };
 
 const registerRules = {
   username: [
     { required: true, message: "请输入用户名", trigger: "blur" },
-    { min: 2, max: 32, message: "用户名长度需要在 2-32 之间", trigger: "blur" }
+    { min: 2, max: 32, message: "用户名长度需要在 2-32 个字符之间", trigger: "blur" }
   ],
   password: [
     { required: true, message: "请输入密码", trigger: "blur" },
-    { min: 6, max: 64, message: "密码长度需要在 6-64 之间", trigger: "blur" }
+    { min: 6, max: 64, message: "密码长度需要在 6-64 个字符之间", trigger: "blur" }
   ],
   confirmPassword: [
     {
@@ -163,7 +169,7 @@ async function submitRegister() {
       username: registerForm.username,
       password: registerForm.password
     });
-    ElMessage.success("注册并登录成功");
+    ElMessage.success("注册成功，已为你登录");
     router.replace("/");
   } catch (error) {
     if (error?.message) {
@@ -177,60 +183,76 @@ async function submitRegister() {
 .auth-page {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: 1.1fr 1fr;
+  grid-template-columns: minmax(0, 1.05fr) minmax(360px, 0.95fr);
   align-items: center;
-  gap: 24px;
-  max-width: 1100px;
+  gap: 28px;
+  width: min(1080px, 100%);
   margin: 0 auto;
   padding: 24px;
 }
 
-.hero-card {
-  padding: 32px;
-  border-radius: 24px;
-  background:
-    radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.22), transparent 60%),
-    linear-gradient(130deg, #ffffff, #f0f9ff);
-  border: 1px solid #dbeafe;
-}
-
-.hero-card h1 {
-  margin: 0 0 12px;
-  font-size: 36px;
-  line-height: 1.2;
-}
-
-.hero-card p {
-  margin: 0;
-  color: #4b5563;
-}
-
-.hero-tags {
-  margin-top: 20px;
+.brand-panel {
+  min-height: 420px;
   display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  justify-content: center;
+  padding: 38px;
+  border-radius: 12px;
+  color: #ffffff;
+  background:
+    linear-gradient(rgba(15, 23, 42, 0.32), rgba(15, 23, 42, 0.46)),
+    url("https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80") center/cover;
+  overflow: hidden;
 }
 
-.form-card {
-  padding: 20px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.94);
+.brand-badge {
+  width: fit-content;
+  margin-bottom: 18px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.18);
+  font-weight: 700;
+}
+
+.brand-panel h1 {
+  max-width: 560px;
+  margin: 0 0 14px;
+  font-size: 40px;
+  line-height: 1.18;
+}
+
+.brand-panel p {
+  max-width: 480px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 17px;
+}
+
+.form-panel {
+  padding: 24px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.96);
   border: 1px solid #e5e7eb;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
 }
 
 .action-btn {
   width: 100%;
 }
 
-@media (max-width: 960px) {
+@media (max-width: 900px) {
   .auth-page {
     grid-template-columns: 1fr;
-    padding: 12px;
+    padding: 14px;
   }
 
-  .hero-card h1 {
-    font-size: 28px;
+  .brand-panel {
+    min-height: 260px;
+    padding: 28px;
+  }
+
+  .brand-panel h1 {
+    font-size: 30px;
   }
 }
 </style>

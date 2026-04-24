@@ -31,14 +31,14 @@ http.interceptors.response.use(
   (error) => {
     const status = error?.response?.status;
     const serverMessage = error?.response?.data?.message;
-    const message = serverMessage || error.message || "网络异常";
+    const message = serverMessage || error.message || "网络异常，请稍后重试";
 
     if (status === 401) {
       localStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem(USER_KEY);
 
       if (window.location.pathname !== "/auth") {
-        const redirect = encodeURIComponent(window.location.pathname);
+        const redirect = encodeURIComponent(`${window.location.pathname}${window.location.search}`);
         window.location.replace(`/auth?redirect=${redirect}`);
       }
     }

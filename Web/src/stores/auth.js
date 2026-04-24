@@ -23,7 +23,7 @@ export const useAuthStore = defineStore("auth", {
   }),
   getters: {
     isLoggedIn: (state) => Boolean(state.token),
-    displayName: (state) => state.user?.username || "未登录"
+    displayName: (state) => state.user?.displayName || state.user?.username || "未登录"
   },
   actions: {
     setToken(token) {
@@ -79,7 +79,7 @@ export const useAuthStore = defineStore("auth", {
       }
     },
     updateTotalScore(totalScore) {
-      if (!this.user) {
+      if (!this.user || totalScore == null) {
         return;
       }
       this.setUser({
