@@ -1,0 +1,49 @@
+erDiagram
+    USERS ||--o{ USER_AUTH_IDENTITY : has
+    USERS ||--o{ USER_PROFILE : owns
+    USERS ||--o{ USER_DEVICE : owns
+    USERS ||--o{ USER_ROLE : assigned
+    ROLE ||--o{ USER_ROLE : contains
+    ROLE ||--o{ ROLE_PERMISSION : grants
+    PERMISSION ||--o{ ROLE_PERMISSION : included
+
+    USERS ||--o{ BOOK : uploads
+    BOOK ||--o{ BOOK_WORD : contains
+    VOCABULARY_WORD ||--o{ BOOK_WORD : included
+    BOOK ||--o{ BOOK_ITEM : orders
+    MEDIA_ASSET ||--o{ BOOK_ITEM : referenced
+
+    USERS ||--o{ USER_WORD_PLAN : configures
+    BOOK ||--o{ USER_WORD_PLAN : selected
+    USER_WORD_PLAN ||--o{ USER_WORD_STATE : tracks
+    VOCABULARY_WORD ||--o{ USER_WORD_STATE : mastered_by
+    USER_WORD_PLAN ||--o{ WORD_STUDY_EVENT : produces
+    VOCABULARY_WORD ||--o{ WORD_STUDY_EVENT : answered
+
+    QUESTION ||--o{ QUESTION_OPTION : has
+    QUESTION ||--o{ QUESTION_ATTEMPT : attempted
+    USERS ||--o{ QUESTION_ATTEMPT : submits
+    QUESTION_ATTEMPT ||--o{ WRONG_ANSWER : creates
+    USERS ||--o{ FAVORITE_ITEM : collects
+
+    READING_PASSAGE ||--o{ READING_PROGRESS : tracked
+    LISTENING_MATERIAL ||--o{ LISTENING_PROGRESS : tracked
+    SPEAKING_TASK ||--o{ SPEAKING_ATTEMPT : attempted
+    USERS ||--o{ READING_PROGRESS : reads
+    USERS ||--o{ LISTENING_PROGRESS : listens
+    USERS ||--o{ SPEAKING_ATTEMPT : speaks
+
+    USERS ||--o{ CHECKIN_RECORD : checks_in
+    USERS ||--o{ SCORE_TRANSACTION : earns
+    USERS ||--o{ DAILY_STUDY_SUMMARY : summarized
+    ACHIEVEMENT ||--o{ USER_ACHIEVEMENT : awarded
+    USERS ||--o{ USER_ACHIEVEMENT : receives
+
+    TAG ||--o{ CONTENT_TAG : marks
+    KNOWLEDGE_POINT ||--o{ CONTENT_KNOWLEDGE_POINT : maps
+    KNOWLEDGE_POINT ||--o{ KNOWLEDGE_RELATION : parent
+    KNOWLEDGE_POINT ||--o{ KNOWLEDGE_RELATION : child
+
+    USERS ||--o{ SYNC_TASK_LOG : syncs
+    USER_DEVICE ||--o{ SYNC_TASK_LOG : sends
+    SYNC_TASK_LOG ||--o{ SYNC_CHANGE_ITEM : contains
