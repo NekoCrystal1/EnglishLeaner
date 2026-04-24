@@ -22,6 +22,7 @@ public:
 private slots:
     void onLogin();
     void onRegister();
+    void onOfflineDemo();
     void onSelectLoginType(int id);
 
 private:
@@ -52,6 +53,7 @@ private:
     QLineEdit* lineEditPassword;
     QPushButton* btnLogin;
     QPushButton* btnRegister;
+    QPushButton* btnOfflineDemo;
     QLabel* labelTitle;
     QLabel* labelSubtitle;
     QLabel* labelTypeHint;

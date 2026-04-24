@@ -11,6 +11,11 @@
 struct UserProfile {
     qint64 userId = 0;
     QString username;
+    QString email;
+    QString displayName;
+    QString avatarUrl;
+    QString status;
+    bool emailVerified = false;
     int totalScore = 0;
     int studyDays = 0;
 };
@@ -18,6 +23,10 @@ struct UserProfile {
 struct QuizQuestion {
     qint64 wordId = 0;
     QString word;
+    QString phonetic;
+    QString translation;
+    QString exampleSentence;
+    QString correctAnswer;
     QStringList options;
 };
 

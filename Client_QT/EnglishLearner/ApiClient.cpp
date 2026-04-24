@@ -163,6 +163,10 @@ bool ApiClient::fetchNextQuestion(QuizQuestion* question, QString* errorMessage)
     QuizQuestion parsed;
     parsed.wordId = static_cast<qint64>(data.value("wordId").toDouble());
     parsed.word = data.value("word").toString();
+    parsed.phonetic = data.value("phonetic").toString();
+    parsed.translation = data.value("translation").toString();
+    parsed.exampleSentence = data.value("exampleSentence").toString();
+    parsed.correctAnswer = data.value("correctAnswer").toString();
 
     const QJsonArray options = data.value("options").toArray();
     for (const QJsonValue& value : options) {
@@ -354,6 +358,11 @@ UserProfile ApiClient::parseUserProfile(const QJsonObject& object)
     UserProfile user;
     user.userId = static_cast<qint64>(object.value("userId").toDouble());
     user.username = object.value("username").toString();
+    user.email = object.value("email").toString();
+    user.displayName = object.value("displayName").toString();
+    user.avatarUrl = object.value("avatarUrl").toString();
+    user.status = object.value("status").toString();
+    user.emailVerified = object.value("emailVerified").toBool(false);
     user.totalScore = object.value("totalScore").toInt(0);
     user.studyDays = object.value("studyDays").toInt(0);
     return user;

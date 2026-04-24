@@ -109,12 +109,15 @@ LoginDialog::LoginDialog(ApiClient* apiClient, QWidget* parent)
     QHBoxLayout* actionLayout = new QHBoxLayout();
     actionLayout->addStretch();
 
+    btnOfflineDemo = new QPushButton(QStringLiteral("\u79bb\u7ebf\u4f53\u9a8c"), loginCard);
+    btnOfflineDemo->setObjectName("secondaryButton");
     btnRegister = new QPushButton(QStringLiteral("\u6ce8\u518c"), loginCard);
     btnRegister->setObjectName("secondaryButton");
     btnLogin = new QPushButton(QStringLiteral("\u767b\u5f55"), loginCard);
     btnLogin->setObjectName("primaryButton");
     btnLogin->setDefault(true);
 
+    actionLayout->addWidget(btnOfflineDemo);
     actionLayout->addWidget(btnRegister);
     actionLayout->addWidget(btnLogin);
     cardLayout->addLayout(actionLayout);
@@ -123,6 +126,7 @@ LoginDialog::LoginDialog(ApiClient* apiClient, QWidget* parent)
 
     connect(btnLogin, &QPushButton::clicked, this, &LoginDialog::onLogin);
     connect(btnRegister, &QPushButton::clicked, this, &LoginDialog::onRegister);
+    connect(btnOfflineDemo, &QPushButton::clicked, this, &LoginDialog::onOfflineDemo);
     connect(loginTypeGroup, &QButtonGroup::idClicked, this, &LoginDialog::onSelectLoginType);
 
     updateLoginTypePresentation();
@@ -349,6 +353,26 @@ void LoginDialog::onRegister()
     lineEditPassword->clear();
 }
 
+void LoginDialog::onOfflineDemo()
+{
+    if (m_apiClient != nullptr) {
+        m_apiClient->setBaseUrl(lineEditServerUrl->text().trimmed());
+        m_apiClient->setToken(QString());
+    }
+
+    UserProfile demo;
+    demo.userId = 1;
+    demo.username = QStringLiteral("offline:demo");
+    demo.displayName = QStringLiteral("\u79bb\u7ebf\u5b66\u4e60\u8005");
+    demo.email = QStringLiteral("demo@local");
+    demo.emailVerified = true;
+    demo.status = QStringLiteral("ACTIVE");
+    demo.totalScore = 128;
+    demo.studyDays = 7;
+    m_loggedInUser = demo;
+    accept();
+}
+
 bool LoginDialog::validateInput(QString* account, QString* password) const
 {
     const QString serverUrl = lineEditServerUrl->text().trimmed();
@@ -455,6 +479,7 @@ void LoginDialog::setBusy(bool busy)
 {
     btnLogin->setEnabled(!busy);
     btnRegister->setEnabled(!busy);
+    btnOfflineDemo->setEnabled(!busy);
     lineEditServerUrl->setEnabled(!busy);
     lineEditAccount->setEnabled(!busy);
     lineEditPassword->setEnabled(!busy);
