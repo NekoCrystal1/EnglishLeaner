@@ -1,47 +1,76 @@
-﻿#pragma once
-#include <QtWidgets/QMainWindow>
-#include <QtWidgets/QLabel>
-#include <QtWidgets/QRadioButton>
-#include <QtWidgets/QPushButton>
-#include "ui_EnglishLearner.h"
+#pragma once
+
+#include <QMainWindow>
+
+#include "ApiClient.h"
+
+class QFrame;
+class QLabel;
+class QProgressBar;
+class QPushButton;
+class QStackedWidget;
+class QTabWidget;
+class QWidget;
 
 class EnglishLearner : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    EnglishLearner(QWidget* parent = nullptr);
-    ~EnglishLearner();
+    explicit EnglishLearner(QWidget* parent = nullptr);
+    ~EnglishLearner() override;
 
 private slots:
-    void onLoginSuccess(int userId, QString username);
-    void onSubmit();             // 提交答案
-    void onShowRanking();        // 显示排行榜
+    void onOpenWordBook();
+    void onOpenStudyStatus();
+    void onStartLearn();
+    void onStartReview();
+    void onBackToWordHome();
 
 private:
-    void loadWord();             // 从数据库加载单词
-    void updateScoreDisplay();   // 更新得分显示
+    void applyTheme();
+    void updateDailyVisual();
+    QString generateDailyWord() const;
+    QString generateDailyMeaning() const;
+    void updateDailyProgress(int delta);
+    void onLoginSuccess(const UserProfile& user);
+    void updateScoreDisplay();
+    QWidget* createWordModePage(const QString& moduleName,
+                                const QString& description,
+                                QPushButton** backButton);
+    QWidget* createPlaceholderModule(const QString& moduleName, const QString& description);
+    QString toDisplayName(const QString& rawUsername) const;
 
 private:
-    Ui::EnglishLearnerClass ui;
-
-    // UI控件（纯代码方式）
+    QLabel* labelAppName;
     QLabel* labelWelcome;
     QLabel* labelScore;
-    QLabel* labelWord;
-    QRadioButton* radioButtons[4];
-    QPushButton* btnSubmit;
-    QPushButton* btnRanking;
-    QLabel* labelFeedback;
 
-    // 用户信息
-    int currentUserId;
-    QString currentUsername;
-    int currentScore;
+    QFrame* heroFrame;
+    QLabel* labelDate;
+    QLabel* labelDailyWord;
+    QLabel* labelDailyMeaning;
+    QPushButton* btnWordBook;
+    QPushButton* btnStudyStatus;
 
-    // 当前单词信息
-    int currentWordId;
-    QString currentWord;
-    QString currentTranslation;
-    QStringList options;         // 四个选项（包含正确和错误）
+    QTabWidget* navTabs;
+
+    QStackedWidget* wordStack;
+    QWidget* wordHomePage;
+    QWidget* wordLearnPage;
+    QWidget* wordReviewPage;
+    QPushButton* btnStartLearn;
+    QPushButton* btnStartReview;
+    QPushButton* btnBackFromLearn;
+    QPushButton* btnBackFromReview;
+
+    QProgressBar* progressDaily;
+    QLabel* labelProgress;
+    QLabel* labelGoal;
+
+    ApiClient m_apiClient;
+    UserProfile m_currentUser;
+
+    int m_dailyGoal = 20;
+    int m_dailyProgress = 0;
 };
