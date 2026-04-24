@@ -22,6 +22,8 @@ Client_QT/EnglishLearner/english_learning.db
 .commit_message.txt
 
 # backend
+/.gradle/
+/.gradle_home/
 Server/.gradle/
 Server/bin/
 Server/build/
