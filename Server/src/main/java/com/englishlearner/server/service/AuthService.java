@@ -5,52 +5,82 @@ import com.englishlearner.server.dto.auth.LoginRequest;
 import com.englishlearner.server.dto.auth.LoginResponse;
 import com.englishlearner.server.dto.auth.RegisterRequest;
 import com.englishlearner.server.dto.auth.UserProfileResponse;
+import com.englishlearner.server.model.UserAuthIdentity;
 import com.englishlearner.server.model.UserAccount;
+import com.englishlearner.server.model.UserProfile;
+import com.englishlearner.server.repository.UserAuthIdentityRepository;
 import com.englishlearner.server.repository.UserAccountRepository;
+import com.englishlearner.server.repository.UserProfileRepository;
 import com.englishlearner.server.security.JwtService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 
 @Service
 public class AuthService {
     private final UserAccountRepository userAccountRepository;
+    private final UserProfileRepository userProfileRepository;
+    private final UserAuthIdentityRepository userAuthIdentityRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
     public AuthService(UserAccountRepository userAccountRepository,
+                       UserProfileRepository userProfileRepository,
+                       UserAuthIdentityRepository userAuthIdentityRepository,
                        PasswordEncoder passwordEncoder,
                        JwtService jwtService) {
         this.userAccountRepository = userAccountRepository;
+        this.userProfileRepository = userProfileRepository;
+        this.userAuthIdentityRepository = userAuthIdentityRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
     }
 
+    @Transactional
     public UserProfileResponse register(RegisterRequest request) {
         String username = request.username().trim();
         if (userAccountRepository.existsByUsernameAndDeletedFalse(username)) {
             throw BusinessException.badRequest("account already exists");
         }
+        String email = trimToNull(request.email());
+        if (email != null && userAccountRepository.existsByEmailAndDeletedFalse(email)) {
+            throw BusinessException.badRequest("email already exists");
+        }
 
         UserAccount user = new UserAccount();
         user.setUsername(username);
         user.setPasswordHash(passwordEncoder.encode(request.password()));
+        user.setEmail(email);
+        user.setDisplayName(trimToNull(request.displayName()));
         user.setTotalScore(0);
         user.setStudyDays(0);
         user.setRoleName("USER");
+        user.setStatus("ACTIVE");
 
         UserAccount saved = userAccountRepository.save(user);
+        createDefaultProfile(saved.getId());
+        createPasswordIdentity(saved);
         return toProfile(saved);
     }
 
+    @Transactional
     public LoginResponse login(LoginRequest request) {
-        String username = request.username().trim();
-        UserAccount user = userAccountRepository.findByUsernameAndDeletedFalse(username)
+        String account = firstNotBlank(request.account(), request.username());
+        if (account == null) {
+            throw BusinessException.badRequest("username or account is required");
+        }
+
+        UserAccount user = findLoginAccount(account)
                 .orElseThrow(() -> BusinessException.unauthorized("invalid username or password"));
 
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             throw BusinessException.unauthorized("invalid username or password");
         }
 
+        user.setLastLoginAt(LocalDateTime.now());
+        userAccountRepository.save(user);
         String token = jwtService.generateToken(user.getId(), user.getUsername());
         return new LoginResponse(token, toProfile(user));
     }
@@ -65,8 +95,52 @@ public class AuthService {
         return new UserProfileResponse(
                 user.getId(),
                 user.getUsername(),
+                user.getEmail(),
+                user.getEmailVerified(),
+                user.getDisplayName(),
+                user.getAvatarUrl(),
+                user.getStatus(),
                 user.getTotalScore(),
                 user.getStudyDays()
         );
+    }
+
+    private java.util.Optional<UserAccount> findLoginAccount(String account) {
+        java.util.Optional<UserAccount> byUsername = userAccountRepository.findByUsernameAndDeletedFalse(account);
+        if (byUsername.isPresent()) {
+            return byUsername;
+        }
+        return userAccountRepository.findByEmailAndDeletedFalse(account);
+    }
+
+    private void createDefaultProfile(Long userId) {
+        UserProfile profile = new UserProfile();
+        profile.setUserId(userId);
+        profile.setDailyMinutes(30);
+        profile.setTimezone("Asia/Shanghai");
+        userProfileRepository.save(profile);
+    }
+
+    private void createPasswordIdentity(UserAccount user) {
+        UserAuthIdentity identity = new UserAuthIdentity();
+        identity.setUserId(user.getId());
+        identity.setProvider("PASSWORD");
+        identity.setProviderUserId(user.getUsername());
+        identity.setCredentialHash(user.getPasswordHash());
+        identity.setBoundAt(LocalDateTime.now());
+        userAuthIdentityRepository.save(identity);
+    }
+
+    private String firstNotBlank(String first, String second) {
+        String value = trimToNull(first);
+        return value != null ? value : trimToNull(second);
+    }
+
+    private String trimToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }
