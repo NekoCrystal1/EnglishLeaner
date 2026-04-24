@@ -12,6 +12,9 @@ erDiagram
     VOCABULARY_WORD ||--o{ BOOK_WORD : included
     BOOK ||--o{ BOOK_ITEM : orders
     MEDIA_ASSET ||--o{ BOOK_ITEM : referenced
+    USERS ||--o{ CONTENT_SHARE : owns
+    USERS ||--o{ CONTENT_SHARE : receives
+    STUDY_GROUP ||--o{ CONTENT_SHARE : receives
 
     USERS ||--o{ USER_WORD_PLAN : configures
     BOOK ||--o{ USER_WORD_PLAN : selected
@@ -36,6 +39,12 @@ erDiagram
     USERS ||--o{ CHECKIN_RECORD : checks_in
     USERS ||--o{ SCORE_TRANSACTION : earns
     USERS ||--o{ DAILY_STUDY_SUMMARY : summarized
+    USERS ||--o{ STUDY_GROUP : creates
+    STUDY_GROUP ||--o{ STUDY_GROUP_MEMBER : has
+    USERS ||--o{ STUDY_GROUP_MEMBER : joins
+    USERS ||--o{ STUDY_PARTNER : pairs
+    USERS ||--o{ LEADERBOARD_SNAPSHOT : ranked
+    STUDY_GROUP ||--o{ LEADERBOARD_SNAPSHOT : scopes
     ACHIEVEMENT ||--o{ USER_ACHIEVEMENT : awarded
     USERS ||--o{ USER_ACHIEVEMENT : receives
 

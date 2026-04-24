@@ -4,7 +4,9 @@ Content-Type: application/json
 
 {
   "username": "demo_user",
-  "password": "12345678"
+  "password": "12345678",
+  "email": "demo@example.com",
+  "displayName": "Demo User"
 }
 
 ### 登录
@@ -12,9 +14,74 @@ POST http://localhost:8080/api/v1/auth/login
 Content-Type: application/json
 
 {
-  "username": "demo_user",
+  "account": "demo_user",
   "password": "12345678"
 }
+
+### 当前用户
+GET http://localhost:8080/api/v1/users/me
+Authorization: Bearer {{token}}
+
+### 查询词书
+GET http://localhost:8080/api/v1/books?bookType=WORD
+Authorization: Bearer {{token}}
+
+### 创建用户上传书籍元数据（正文保存在客户端）
+POST http://localhost:8080/api/v1/books
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "我的本地词书",
+  "bookType": "WORD",
+  "language": "en",
+  "level": "BEGINNER",
+  "itemCount": 120,
+  "clientContentRef": "client://books/local-book-001",
+  "contentHash": "local-content-hash"
+}
+
+### 查询词书单词
+GET http://localhost:8080/api/v1/books/1/words
+Authorization: Bearer {{token}}
+
+### 获取或创建当前单词计划
+GET http://localhost:8080/api/v1/word-learning/plans/current
+Authorization: Bearer {{token}}
+
+### 创建单词计划
+POST http://localhost:8080/api/v1/word-learning/plans
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "bookId": 1,
+  "dailyNewCount": 10,
+  "dailyReviewCount": 20
+}
+
+### 获取今日新学/复习单词
+GET http://localhost:8080/api/v1/word-learning/due-words
+Authorization: Bearer {{token}}
+
+### 提交单词学习事件
+POST http://localhost:8080/api/v1/word-learning/events
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "planId": 1,
+  "wordId": 1,
+  "activityType": "NEW",
+  "selectedAnswer": "苹果",
+  "correct": true,
+  "durationMs": 3000,
+  "clientEventId": "demo-event-001"
+}
+
+### 今日学习汇总
+GET http://localhost:8080/api/v1/word-learning/summary/today
+Authorization: Bearer {{token}}
 
 ### 获取题目（替换 {{token}}）
 GET http://localhost:8080/api/v1/quiz/next

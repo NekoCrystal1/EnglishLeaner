@@ -11,9 +11,13 @@ import java.util.Optional;
 public interface UserAccountRepository extends JpaRepository<UserAccount, Long> {
     Optional<UserAccount> findByUsernameAndDeletedFalse(String username);
 
+    Optional<UserAccount> findByEmailAndDeletedFalse(String email);
+
     Optional<UserAccount> findByIdAndDeletedFalse(Long id);
 
     boolean existsByUsernameAndDeletedFalse(String username);
+
+    boolean existsByEmailAndDeletedFalse(String email);
 
     @Query("select u from UserAccount u where u.deleted = false order by u.totalScore desc, u.id asc")
     List<UserAccount> findTopByScore(Pageable pageable);
