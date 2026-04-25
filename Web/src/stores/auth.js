@@ -23,7 +23,15 @@ export const useAuthStore = defineStore("auth", {
   }),
   getters: {
     isLoggedIn: (state) => Boolean(state.token),
-    displayName: (state) => state.user?.displayName || state.user?.username || "学习者"
+    displayName: (state) => state.user?.displayName || state.user?.username || "学习者",
+    isAdmin: (state) => {
+      const roles = state.user?.roles || [];
+      return state.user?.roleName === "ADMIN" || roles.includes("ADMIN");
+    },
+    hasPermission: (state) => (permission) => {
+      const permissions = state.user?.permissions || [];
+      return permissions.includes(permission);
+    }
   },
   actions: {
     setToken(token) {

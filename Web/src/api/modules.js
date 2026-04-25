@@ -74,3 +74,21 @@ export const wordLearningApi = {
     return http.get("/word-learning/summary/today");
   }
 };
+
+export const adminApi = {
+  overview() {
+    return http.get("/admin/overview");
+  },
+  users(params = {}) {
+    return http.get("/admin/users", { params });
+  },
+  roles() {
+    return http.get("/admin/roles");
+  },
+  updateUserStatus(userId, status) {
+    return http.put(`/admin/users/${userId}/status`, { status });
+  },
+  updateUserRole(userId, roleCode) {
+    return http.put(`/admin/users/${userId}/role`, { roleCode });
+  }
+};

@@ -43,6 +43,10 @@ http.interceptors.response.use(
       }
     }
 
+    if (status === 403) {
+      return Promise.reject(new Error(serverMessage || "没有访问权限"));
+    }
+
     return Promise.reject(new Error(message));
   }
 );

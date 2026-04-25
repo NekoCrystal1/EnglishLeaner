@@ -29,6 +29,10 @@
           <el-icon><Trophy /></el-icon>
           <span>排行榜</span>
         </el-menu-item>
+        <el-menu-item v-if="authStore.isAdmin" index="/admin">
+          <el-icon><Setting /></el-icon>
+          <span>后台管理</span>
+        </el-menu-item>
       </el-menu>
 
       <div class="header-right">
@@ -44,6 +48,7 @@
             <el-dropdown-menu>
               <el-dropdown-item @click="goHome">返回首页</el-dropdown-item>
               <el-dropdown-item @click="goWords">单词学习</el-dropdown-item>
+              <el-dropdown-item v-if="authStore.isAdmin" @click="goAdmin">后台管理</el-dropdown-item>
               <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
             </el-dropdown-menu>
           </template>
@@ -60,7 +65,7 @@
 <script setup>
 import { computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { ArrowDown, Collection, EditPen, House, Trophy } from "@element-plus/icons-vue";
+import { ArrowDown, Collection, EditPen, House, Setting, Trophy } from "@element-plus/icons-vue";
 import { useAuthStore } from "../stores/auth";
 
 const route = useRoute();
@@ -68,6 +73,9 @@ const router = useRouter();
 const authStore = useAuthStore();
 
 const activePath = computed(() => {
+  if (route.path.startsWith("/admin")) {
+    return "/admin";
+  }
   if (route.path.startsWith("/ranking")) {
     return "/ranking";
   }
@@ -90,6 +98,10 @@ function goHome() {
 
 function goWords() {
   router.push("/words");
+}
+
+function goAdmin() {
+  router.push("/admin");
 }
 
 function handleLogout() {
