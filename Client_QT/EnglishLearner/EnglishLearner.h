@@ -13,6 +13,7 @@ class QListWidgetItem;
 class QPlainTextEdit;
 class QProgressBar;
 class QPushButton;
+class QResizeEvent;
 class QSlider;
 class QSpinBox;
 class QStackedWidget;
@@ -28,7 +29,11 @@ public:
     explicit EnglishLearner(QWidget* parent = nullptr);
     ~EnglishLearner() override;
 
+protected:
+    void resizeEvent(QResizeEvent* event) override;
+
 private slots:
+    void onNavigate();
     void onOpenStudyStatus();
     void onStartLearn();
     void onStartReview();
@@ -50,11 +55,28 @@ private slots:
     void onCreateStudyGroup();
 
 private:
+    enum PageIndex {
+        PageToday = 0,
+        PageWords,
+        PagePractice,
+        PageContent,
+        PageReading,
+        PageListeningSpeaking,
+        PageMine
+    };
+
     void buildUi();
     QWidget* createHeader(QWidget* parent);
+    QWidget* createSidebar(QWidget* parent);
+    QWidget* createBottomNav(QWidget* parent);
+    QWidget* createStatusPanel(QWidget* parent);
+    QPushButton* createNavButton(const QString& text, int pageIndex, QWidget* parent) const;
+    QWidget* createTodayModule(QWidget* parent);
     QWidget* createWordModule(QWidget* parent);
     QWidget* createWordHomePage(QWidget* parent);
     QWidget* createWordPracticePage(QWidget* parent, const QString& modeName);
+    QWidget* createPracticeModule(QWidget* parent);
+    QWidget* createContentModule(QWidget* parent);
     QWidget* createReadingModule(QWidget* parent);
     QWidget* createListeningSpeakingModule(QWidget* parent);
     QWidget* createMineModule(QWidget* parent);
@@ -64,7 +86,11 @@ private:
     QPushButton* createActionButton(const QString& text, const QString& objectName, QWidget* parent) const;
 
     void applyTheme();
+    void applyAdaptiveLayout();
     void updateDailyVisual();
+    void switchPage(int pageIndex);
+    void updateNavigationState();
+    void updateStatusPanel();
     void refreshAll();
     void refreshBooks();
     void refreshTodaySummary();
@@ -78,6 +104,7 @@ private:
     void enterPracticeMode(const QString& activityType);
     void setCurrentQuestion(const QuizQuestion& question, bool fromServer);
     QuizQuestion fallbackQuestion() const;
+    QString todaySummaryText() const;
     QString generateDailyWord() const;
     QString generateDailyMeaning() const;
     QString toDisplayName(const QString& rawUsername) const;
@@ -98,7 +125,24 @@ private:
     QLabel* labelSyncStatus = nullptr;
     QPushButton* btnSyncNow = nullptr;
 
+    QFrame* sidebarPanel = nullptr;
+    QFrame* bottomNavBar = nullptr;
+    QFrame* statusPanel = nullptr;
+    QStackedWidget* pageStack = nullptr;
+    QList<QPushButton*> sideNavButtons;
+    QList<QPushButton*> bottomNavButtons;
+    int currentPageIndex = PageToday;
+    bool compactMode = false;
     QTabWidget* navTabs = nullptr;
+
+    QLabel* labelTodayDate = nullptr;
+    QLabel* labelTodayFocus = nullptr;
+    QLabel* labelTodayTaskSummary = nullptr;
+    QLabel* labelTodayStatus = nullptr;
+    QProgressBar* progressTodayCompletion = nullptr;
+    QLabel* labelPanelToday = nullptr;
+    QLabel* labelPanelPlan = nullptr;
+    QLabel* labelPanelSync = nullptr;
 
     QFrame* heroFrame = nullptr;
     QLabel* labelDate = nullptr;

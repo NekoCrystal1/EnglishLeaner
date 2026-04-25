@@ -55,19 +55,21 @@ LoginDialog::LoginDialog(ApiClient* apiClient, QWidget* parent)
     methodButtonsLayout->setSpacing(10);
 
     const QStringList methodNames{
+        QStringLiteral("\u8d26\u53f7/\u90ae\u7bb1"),
         QStringLiteral("\u624b\u673a\u53f7"),
         QStringLiteral("\u5fae\u4fe1"),
-        QStringLiteral("QQ"),
-        QStringLiteral("\u90ae\u7bb1")
+        QStringLiteral("QQ")
     };
     for (int i = 0; i < methodNames.size(); ++i) {
         QPushButton* button = new QPushButton(methodNames[i], loginCard);
         button->setCheckable(true);
         button->setObjectName("loginTypeButton");
+        button->setProperty("reserved", i != static_cast<int>(LoginType::Account));
+        button->setEnabled(i == static_cast<int>(LoginType::Account));
         methodButtonsLayout->addWidget(button);
         loginTypeGroup->addButton(button, i);
     }
-    loginTypeGroup->button(static_cast<int>(LoginType::Phone))->setChecked(true);
+    loginTypeGroup->button(static_cast<int>(LoginType::Account))->setChecked(true);
     cardLayout->addLayout(methodButtonsLayout);
 
     labelTypeHint = new QLabel(loginCard);
@@ -100,7 +102,7 @@ LoginDialog::LoginDialog(ApiClient* apiClient, QWidget* parent)
     cardLayout->addLayout(formLayout);
 
     labelHint = new QLabel(
-        QStringLiteral("\u624b\u673a\u53f7\u548c\u90ae\u7bb1\u53ef\u76f4\u63a5\u6ce8\u518c\u767b\u5f55\uff0c\u5fae\u4fe1\u548cQQ\u652f\u6301\u8d26\u53f7\u5165\u53e3\u767b\u5f55\u3002"),
+        QStringLiteral("\u5f53\u524d\u6b63\u5f0f\u542f\u7528\u8d26\u53f7/\u90ae\u7bb1+\u5bc6\u7801\u767b\u5f55\uff0c\u624b\u673a\u53f7\u3001\u5fae\u4fe1\u548cQQ\u5165\u53e3\u4fdd\u7559\u7ed9\u540e\u7eed\u7ed1\u5b9a\u3002"),
         loginCard);
     labelHint->setObjectName("loginHint");
     labelHint->setWordWrap(true);
@@ -248,25 +250,25 @@ void LoginDialog::onSelectLoginType(int id)
 void LoginDialog::updateLoginTypePresentation()
 {
     switch (m_loginType) {
+    case LoginType::Account:
+        lineEditAccount->setPlaceholderText(QStringLiteral("\u8bf7\u8f93\u5165\u8d26\u53f7\u6216\u90ae\u7bb1"));
+        lineEditPassword->setPlaceholderText(QStringLiteral("\u8bf7\u8f93\u5165\u5bc6\u7801"));
+        labelTypeHint->setText(QStringLiteral("\u5df2\u5bf9\u9f50\u540e\u7aef\u5f53\u524d\u6b63\u5f0f\u6d41\u7a0b\uff1aaccount + password\u3002"));
+        break;
     case LoginType::Phone:
         lineEditAccount->setPlaceholderText(QStringLiteral("\u8bf7\u8f93\u5165\u624b\u673a\u53f7"));
         lineEditPassword->setPlaceholderText(QStringLiteral("\u8bf7\u8f93\u5165\u5bc6\u7801"));
-        labelTypeHint->setText(QStringLiteral("\u624b\u673a\u53f7\u65b9\u5f0f\u5df2\u63a5\u5165\uff0c\u652f\u6301\u8d26\u53f7\u5bc6\u7801\u767b\u5f55\u3002"));
+        labelTypeHint->setText(QStringLiteral("\u624b\u673a\u53f7\u767b\u5f55\u4e3a\u9884\u7559\u5165\u53e3\uff0c\u5f85\u9a8c\u8bc1\u7801\u548c\u7ed1\u5b9a\u6d41\u7a0b\u63a5\u5165\u540e\u542f\u7528\u3002"));
         break;
     case LoginType::Wechat:
         lineEditAccount->setPlaceholderText(QStringLiteral("\u8bf7\u8f93\u5165\u5fae\u4fe1\u53f7"));
         lineEditPassword->setPlaceholderText(QStringLiteral("\u8bf7\u8f93\u5165\u5bc6\u7801"));
-        labelTypeHint->setText(QStringLiteral("\u5fae\u4fe1\u65b9\u5f0f\u5df2\u63a5\u5165\uff0c\u652f\u6301\u8d26\u53f7\u5bc6\u7801\u767b\u5f55\u3002"));
+        labelTypeHint->setText(QStringLiteral("\u5fae\u4fe1\u767b\u5f55\u4e3a\u9884\u7559\u5165\u53e3\uff0c\u5f85 provider \u7ed1\u5b9a\u6d41\u7a0b\u63a5\u5165\u540e\u542f\u7528\u3002"));
         break;
     case LoginType::QQ:
         lineEditAccount->setPlaceholderText(QStringLiteral("\u8bf7\u8f93\u5165QQ\u53f7"));
         lineEditPassword->setPlaceholderText(QStringLiteral("\u8bf7\u8f93\u5165\u5bc6\u7801"));
-        labelTypeHint->setText(QStringLiteral("QQ\u65b9\u5f0f\u5df2\u63a5\u5165\uff0c\u652f\u6301\u8d26\u53f7\u5bc6\u7801\u767b\u5f55\u3002"));
-        break;
-    case LoginType::Email:
-        lineEditAccount->setPlaceholderText(QStringLiteral("\u8bf7\u8f93\u5165\u90ae\u7bb1\u5730\u5740"));
-        lineEditPassword->setPlaceholderText(QStringLiteral("\u8bf7\u8f93\u5165\u5bc6\u7801"));
-        labelTypeHint->setText(QStringLiteral("\u90ae\u7bb1\u65b9\u5f0f\u5df2\u63a5\u5165\uff0c\u652f\u6301\u8d26\u53f7\u5bc6\u7801\u767b\u5f55\u3002"));
+        labelTypeHint->setText(QStringLiteral("QQ\u767b\u5f55\u4e3a\u9884\u7559\u5165\u53e3\uff0c\u5f85 provider \u7ed1\u5b9a\u6d41\u7a0b\u63a5\u5165\u540e\u542f\u7528\u3002"));
         break;
     }
 }
@@ -389,7 +391,14 @@ bool LoginDialog::validateInput(QString* account, QString* password) const
         return false;
     }
 
-    if (m_loginType == LoginType::Phone) {
+    if (m_loginType == LoginType::Account) {
+        if (inputAccount.size() < 2 || inputAccount.size() > 128) {
+            QMessageBox::warning(const_cast<LoginDialog*>(this),
+                                 QStringLiteral("\u8f93\u5165\u63d0\u793a"),
+                                 QStringLiteral("\u8d26\u53f7/\u90ae\u7bb1\u957f\u5ea6\u9700\u57282\u5230128\u4e4b\u95f4\u3002"));
+            return false;
+        }
+    } else if (m_loginType == LoginType::Phone) {
         const QRegularExpression phonePattern("^\\+?[0-9\\- ]{6,20}$");
         if (!phonePattern.match(inputAccount).hasMatch()) {
             QMessageBox::warning(const_cast<LoginDialog*>(this),
@@ -413,9 +422,6 @@ bool LoginDialog::validateInput(QString* account, QString* password) const
                                  QStringLiteral("QQ\u53f7\u683c\u5f0f\u4e0d\u6b63\u786e\uff0c\u8bf7\u8f93\u51655-12\u4f4d\u6570\u5b57\u3002"));
             return false;
         }
-    } else if (m_loginType == LoginType::Email && !inputAccount.contains('@')) {
-        QMessageBox::warning(const_cast<LoginDialog*>(this), QStringLiteral("\u8f93\u5165\u63d0\u793a"), QStringLiteral("\u90ae\u7bb1\u683c\u5f0f\u4e0d\u6b63\u786e\uff0c\u8bf7\u91cd\u65b0\u8f93\u5165\u3002"));
-        return false;
     }
 
     if (account != nullptr) {
@@ -431,14 +437,14 @@ QString LoginDialog::toBackendAccount(const QString& rawAccount) const
 {
     const QString normalized = normalizeAccount(rawAccount);
     switch (m_loginType) {
+    case LoginType::Account:
+        return normalized;
     case LoginType::Phone:
         return QStringLiteral("phone:%1").arg(normalized);
     case LoginType::Wechat:
         return QStringLiteral("wechat:%1").arg(normalized);
     case LoginType::QQ:
         return QStringLiteral("qq:%1").arg(normalized);
-    case LoginType::Email:
-        return QStringLiteral("email:%1").arg(normalized);
     }
     return QStringLiteral("account:%1").arg(normalized);
 }
@@ -449,7 +455,7 @@ QString LoginDialog::normalizeAccount(const QString& rawAccount) const
     if (m_loginType == LoginType::Phone) {
         normalized.remove(' ');
         normalized.remove('-');
-    } else if (m_loginType == LoginType::Email) {
+    } else if (m_loginType == LoginType::Account && normalized.contains('@')) {
         normalized = normalized.toLower();
     }
     return normalized;
@@ -458,14 +464,14 @@ QString LoginDialog::normalizeAccount(const QString& rawAccount) const
 QString LoginDialog::currentTypeName() const
 {
     switch (m_loginType) {
+    case LoginType::Account:
+        return QStringLiteral("\u8d26\u53f7/\u90ae\u7bb1");
     case LoginType::Phone:
         return QStringLiteral("\u624b\u673a\u53f7");
     case LoginType::Wechat:
         return QStringLiteral("\u5fae\u4fe1");
     case LoginType::QQ:
         return QStringLiteral("QQ");
-    case LoginType::Email:
-        return QStringLiteral("\u90ae\u7bb1");
     }
     return QStringLiteral("\u8d26\u53f7");
 }
@@ -484,7 +490,7 @@ void LoginDialog::setBusy(bool busy)
     lineEditAccount->setEnabled(!busy);
     lineEditPassword->setEnabled(!busy);
     for (QAbstractButton* button : loginTypeGroup->buttons()) {
-        button->setEnabled(!busy);
+        button->setEnabled(!busy && !button->property("reserved").toBool());
     }
 
     if (busy) {
