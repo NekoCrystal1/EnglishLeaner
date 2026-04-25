@@ -7,4 +7,6 @@ import java.util.Optional;
 
 public interface UserProfileRepository extends JpaRepository<UserProfile, Long> {
     Optional<UserProfile> findByUserIdAndDeletedFalse(Long userId);
+
+    boolean existsByUserIdAndDeletedFalse(Long userId);
 }

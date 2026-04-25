@@ -10,6 +10,7 @@ import com.englishlearner.server.security.AuthenticatedUser;
 import com.englishlearner.server.service.BookService;
 import com.englishlearner.server.service.SystemVocabularyImportService;
 import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -49,6 +50,7 @@ public class BookController {
     }
 
     @PostMapping("/system/import")
+    @PreAuthorize("hasAuthority('CONTENT_IMPORT')")
     public ApiResponse<SystemBookImportResponse> importSystemBooks(@RequestParam(required = false) String bookKey,
                                                                    Authentication authentication) {
         getUserId(authentication);

@@ -42,6 +42,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/**", "/actuator/health").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/ranking/**").permitAll()
+                        .requestMatchers("/api/v1/admin/**").hasAuthority("ADMIN_ACCESS")
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();

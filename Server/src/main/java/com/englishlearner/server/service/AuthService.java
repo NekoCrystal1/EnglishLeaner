@@ -25,17 +25,20 @@ public class AuthService {
     private final UserAccountRepository userAccountRepository;
     private final UserProfileRepository userProfileRepository;
     private final UserAuthIdentityRepository userAuthIdentityRepository;
+    private final AccessControlService accessControlService;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
     public AuthService(UserAccountRepository userAccountRepository,
                        UserProfileRepository userProfileRepository,
                        UserAuthIdentityRepository userAuthIdentityRepository,
+                       AccessControlService accessControlService,
                        PasswordEncoder passwordEncoder,
                        JwtService jwtService) {
         this.userAccountRepository = userAccountRepository;
         this.userProfileRepository = userProfileRepository;
         this.userAuthIdentityRepository = userAuthIdentityRepository;
+        this.accessControlService = accessControlService;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
     }
@@ -65,6 +68,7 @@ public class AuthService {
         UserAccount saved = userAccountRepository.save(user);
         createDefaultProfile(saved.getId());
         createPasswordIdentity(saved);
+        accessControlService.assignSingleRole(saved, AccessControlService.ROLE_USER);
         return toProfile(saved);
     }
 
@@ -81,6 +85,9 @@ public class AuthService {
 
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             throw BusinessException.unauthorized("invalid username or password");
+        }
+        if (!AccessControlService.STATUS_ACTIVE.equalsIgnoreCase(user.getStatus())) {
+            throw BusinessException.unauthorized("account is disabled");
         }
 
         LocalDateTime loginAt = LocalDateTime.now();
@@ -99,6 +106,7 @@ public class AuthService {
     }
 
     private UserProfileResponse toProfile(UserAccount user) {
+        AccessControlService.UserAccess access = accessControlService.resolveAccess(user);
         return new UserProfileResponse(
                 user.getId(),
                 user.getUsername(),
@@ -107,6 +115,9 @@ public class AuthService {
                 user.getDisplayName(),
                 user.getAvatarUrl(),
                 user.getStatus(),
+                access.primaryRole(),
+                access.roles(),
+                access.permissions(),
                 user.getTotalScore(),
                 user.getStudyDays()
         );

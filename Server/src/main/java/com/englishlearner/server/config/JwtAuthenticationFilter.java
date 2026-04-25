@@ -2,6 +2,7 @@ package com.englishlearner.server.config;
 
 import com.englishlearner.server.security.AuthenticatedUser;
 import com.englishlearner.server.security.JwtService;
+import com.englishlearner.server.service.AccessControlService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,9 +20,12 @@ import java.util.Optional;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
+    private final AccessControlService accessControlService;
 
-    public JwtAuthenticationFilter(JwtService jwtService) {
+    public JwtAuthenticationFilter(JwtService jwtService,
+                                   AccessControlService accessControlService) {
         this.jwtService = jwtService;
+        this.accessControlService = accessControlService;
     }
 
     @Override
@@ -38,7 +42,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             Optional<AuthenticatedUser> authUserOpt = jwtService.parseToken(token);
 
             if (authUserOpt.isPresent()) {
-                AuthenticatedUser authUser = authUserOpt.get();
+                AuthenticatedUser tokenUser = authUserOpt.get();
+                Optional<AuthenticatedUser> currentUser = accessControlService.authenticate(tokenUser.userId());
+                if (currentUser.isEmpty()) {
+                    filterChain.doFilter(request, response);
+                    return;
+                }
+                AuthenticatedUser authUser = currentUser.get();
                 UsernamePasswordAuthenticationToken authenticationToken =
                         new UsernamePasswordAuthenticationToken(authUser, null, authUser.authorities());
                 authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

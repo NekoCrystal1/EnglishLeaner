@@ -30,6 +30,13 @@ app:
   security:
     jwt-secret: "replace-this-with-at-least-32-byte-random-secret-key"
     token-expire-seconds: 86400
+  admin:
+    bootstrap:
+      enabled: true
+      username: ${APP_ADMIN_USERNAME:admin}
+      password: ${APP_ADMIN_PASSWORD:Admin@123456}
+      display-name: ${APP_ADMIN_DISPLAY_NAME:系统管理员}
+      email: ${APP_ADMIN_EMAIL:}
 
 ---
 spring:

@@ -1,19 +1,19 @@
-package com.englishlearner.server.dto.auth;
+package com.englishlearner.server.dto.admin;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
-public record UserProfileResponse(
+public record AdminUserResponse(
         Long userId,
         String username,
         String email,
-        Boolean emailVerified,
         String displayName,
-        String avatarUrl,
         String status,
         String roleName,
         List<String> roles,
-        List<String> permissions,
         Integer totalScore,
-        Integer studyDays
+        Integer studyDays,
+        LocalDateTime lastLoginAt,
+        LocalDateTime createdAt
 ) {
 }
