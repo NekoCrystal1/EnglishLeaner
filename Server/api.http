@@ -1,5 +1,5 @@
 ### 注册
-POST http://localhost:8080/api/v1/auth/register
+POST http://localhost:18080/api/v1/auth/register
 Content-Type: application/json
 
 {
@@ -10,7 +10,7 @@ Content-Type: application/json
 }
 
 ### 登录
-POST http://localhost:8080/api/v1/auth/login/password
+POST http://localhost:18080/api/v1/auth/login/password
 Content-Type: application/json
 
 {
@@ -19,15 +19,15 @@ Content-Type: application/json
 }
 
 ### 当前用户
-GET http://localhost:8080/api/v1/users/me
+GET http://localhost:18080/api/v1/users/me
 Authorization: Bearer {{token}}
 
 ### 查询词书
-GET http://localhost:8080/api/v1/books?bookType=WORD
+GET http://localhost:18080/api/v1/books?bookType=WORD
 Authorization: Bearer {{token}}
 
 ### 创建用户上传书籍元数据（正文保存在客户端）
-POST http://localhost:8080/api/v1/books
+POST http://localhost:18080/api/v1/books
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
@@ -42,15 +42,15 @@ Content-Type: application/json
 }
 
 ### 查询词书单词
-GET http://localhost:8080/api/v1/books/1/words
+GET http://localhost:18080/api/v1/books/1/words
 Authorization: Bearer {{token}}
 
 ### 获取或创建当前单词计划
-GET http://localhost:8080/api/v1/word-learning/plans/current
+GET http://localhost:18080/api/v1/word-learning/plans/current
 Authorization: Bearer {{token}}
 
 ### 创建单词计划
-POST http://localhost:8080/api/v1/word-learning/plans
+POST http://localhost:18080/api/v1/word-learning/plans
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
@@ -61,11 +61,11 @@ Content-Type: application/json
 }
 
 ### 获取今日新学/复习单词
-GET http://localhost:8080/api/v1/word-learning/due-words
+GET http://localhost:18080/api/v1/word-learning/due-words
 Authorization: Bearer {{token}}
 
 ### 提交单词学习事件
-POST http://localhost:8080/api/v1/word-learning/events
+POST http://localhost:18080/api/v1/word-learning/events
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
@@ -80,15 +80,15 @@ Content-Type: application/json
 }
 
 ### 今日学习汇总
-GET http://localhost:8080/api/v1/word-learning/summary/today
+GET http://localhost:18080/api/v1/word-learning/summary/today
 Authorization: Bearer {{token}}
 
 ### 获取题目（替换 {{token}}）
-GET http://localhost:8080/api/v1/quiz/next
+GET http://localhost:18080/api/v1/quiz/next
 Authorization: Bearer {{token}}
 
 ### 提交答案（替换 {{token}} 和 wordId）
-POST http://localhost:8080/api/v1/quiz/submit
+POST http://localhost:18080/api/v1/quiz/submit
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
@@ -98,12 +98,12 @@ Content-Type: application/json
 }
 
 ### 排行榜
-GET http://localhost:8080/api/v1/ranking/top?limit=10
+GET http://localhost:18080/api/v1/ranking/top?limit=10
 
 ### Import all built-in ECDICT word books
-POST http://localhost:8080/api/v1/books/system/import
+POST http://localhost:18080/api/v1/books/system/import
 Authorization: Bearer {{token}}
 
 ### Import one built-in ECDICT word book
-POST http://localhost:8080/api/v1/books/system/import?bookKey=cet4
+POST http://localhost:18080/api/v1/books/system/import?bookKey=cet4
 Authorization: Bearer {{token}}
