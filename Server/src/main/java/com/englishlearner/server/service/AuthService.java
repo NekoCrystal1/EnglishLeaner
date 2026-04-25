@@ -40,6 +40,7 @@ public class AuthService {
 
     @Transactional
     public UserProfileResponse register(RegisterRequest request) {
+        // 注册时同时创建账号、默认资料和密码登录身份。
         String username = request.username().trim();
         if (userAccountRepository.existsByUsernameAndDeletedFalse(username)) {
             throw BusinessException.badRequest("account already exists");
@@ -67,6 +68,7 @@ public class AuthService {
 
     @Transactional
     public LoginResponse login(LoginRequest request) {
+        // 登录兼容新的 account 字段和旧的 username 字段。
         String account = firstNotBlank(request.account(), request.username());
         if (account == null) {
             throw BusinessException.badRequest("username or account is required");

@@ -21,6 +21,7 @@ public class RankingController {
 
     @GetMapping("/top")
     public ApiResponse<List<RankingItemResponse>> top(@RequestParam(defaultValue = "10") int limit) {
+        // 排行榜有意公开，SecurityConfig 允许只读访问该路由。
         return ApiResponse.ok(quizService.topRanking(limit));
     }
 }

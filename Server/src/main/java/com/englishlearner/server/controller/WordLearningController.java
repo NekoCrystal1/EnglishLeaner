@@ -59,6 +59,7 @@ public class WordLearningController {
     @GetMapping("/due-words")
     public ApiResponse<List<WordLearningItemResponse>> dueWords(@RequestParam(required = false) Long planId,
                                                                 Authentication authentication) {
+        // 服务层会先返回到期复习词，再用词书中的新词补足数量。
         return ApiResponse.ok(wordLearningService.getDueWords(getUserId(authentication), planId));
     }
 

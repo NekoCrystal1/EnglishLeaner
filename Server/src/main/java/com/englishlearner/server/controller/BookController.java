@@ -31,6 +31,7 @@ public class BookController {
     @GetMapping
     public ApiResponse<List<BookResponse>> list(@RequestParam(required = false) String bookType,
                                                 Authentication authentication) {
+        // 词书可见性与用户有关：系统公开词书加上当前用户自己的词书。
         Long userId = getUserId(authentication);
         return ApiResponse.ok(bookService.listVisibleBooks(userId, bookType));
     }

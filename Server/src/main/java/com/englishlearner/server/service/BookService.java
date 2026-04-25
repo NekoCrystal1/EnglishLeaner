@@ -35,6 +35,7 @@ public class BookService {
     }
 
     public List<BookResponse> listVisibleBooks(Long userId, String bookType) {
+        // 可见词书要么属于系统，要么属于当前调用者。
         return bookRepository.findVisibleBooks(userId, trimToNull(bookType)).stream()
                 .map(this::toBookResponse)
                 .toList();
@@ -70,6 +71,7 @@ public class BookService {
             return List.of();
         }
 
+        // 一次性查询单词详情，再按照 book_word.sort_order 还原词书顺序。
         List<Long> wordIds = relations.stream().map(BookWord::getWordId).toList();
         Map<Long, VocabularyWord> words = vocabularyWordRepository.findByIdInAndDeletedFalse(wordIds).stream()
                 .collect(Collectors.toMap(VocabularyWord::getId, Function.identity(), (a, b) -> a, LinkedHashMap::new));
