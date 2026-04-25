@@ -28,6 +28,11 @@ public class AuthController {
 
     @PostMapping("/login")
     public ApiResponse<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
-        return ApiResponse.ok("login success", authService.login(request));
+        return ApiResponse.ok("login success", authService.loginWithPassword(request));
+    }
+
+    @PostMapping("/login/password")
+    public ApiResponse<LoginResponse> loginWithPassword(@Valid @RequestBody LoginRequest request) {
+        return ApiResponse.ok("login success", authService.loginWithPassword(request));
     }
 }

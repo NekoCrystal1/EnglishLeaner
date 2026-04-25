@@ -1,5 +1,11 @@
 # EnglishLearner Server
 
+## Account/password login
+
+- Current official login: `POST /api/v1/auth/login/password`, request body `account` + `password`.
+- Compatibility alias: `POST /api/v1/auth/login` uses the same account/password flow.
+- Reserved login providers such as phone, QQ, and WeChat continue to use `user_auth_identity` later; they are not enabled yet.
+
 ## 目录说明
 
 - `src/main/java`：后端代码（Spring Boot）
@@ -9,7 +15,7 @@
 ## 已实现接口
 
 - `POST /api/v1/auth/register`：注册
-- `POST /api/v1/auth/login`：登录，返回 JWT
+- `POST /api/v1/auth/login/password`：账号密码登录，返回 JWT（`/api/v1/auth/login` 为兼容别名）
 - `GET /api/v1/users/me`：当前登录用户信息
 - `GET /api/v1/quiz/next`：获取下一题
 - `POST /api/v1/quiz/submit`：提交答案，写入单词学习事件、积分流水和每日汇总

@@ -1,5 +1,13 @@
 # 数据库设计
 
+## 当前登录实现补充
+
+- 当前正式启用的登录方式是账号密码登录：`POST /api/v1/auth/login/password`，请求体使用 `account` + `password`。
+- `POST /api/v1/auth/login` 保留为兼容别名，同样走账号密码登录流程。
+- `users.username` 与 `users.password_hash` 是账号密码登录的主数据；`user_auth_identity.provider = 'PASSWORD'` 用于记录当前启用的登录身份。
+- QQ、微信、手机号验证码等其他登录方式暂不开放，仅通过 `user_auth_identity` 的 `provider`、`provider_user_id`、`union_id`、`credential_hash` 字段预留扩展。
+- `V9__account_password_login_identity.sql` 用于为历史用户回填 `PASSWORD` 身份记录，保证迁移后已有账号也能使用直接账号密码登录。
+
 > 版本：v2 目标设计  
 > 适用范围：交互式英语自学系统服务端 SQL Server 主库、Qt 客户端 SQLite 离线库、Web/管理端数据接口。
 
@@ -456,7 +464,8 @@ erDiagram
 | `V6__question_bank_schema.sql` | 创建 `question`、`question_option`、`question_attempt`、`wrong_answer`、`favorite_item` |
 | `V7__extended_learning_and_share_schema.sql` | 创建内容分享、阅读、听力、口语相关表，支持后台统一录入、客户端本地导入和客户端之间分享传输 |
 | `V8__community_leaderboard_schema.sql` | 创建小组/同桌、打卡、成就和多范围排行榜快照表 |
-| `V9__admin_tag_knowledge_schema.sql` | 创建管理、标签、知识点和推荐预留表 |
+| `V9__account_password_login_identity.sql` | 为历史用户回填 `PASSWORD` 登录身份，明确账号密码登录为当前正式登录方式 |
+| `V10__admin_tag_knowledge_schema.sql` | 创建管理、标签、知识点和推荐预留表 |
 
 兼容策略：
 

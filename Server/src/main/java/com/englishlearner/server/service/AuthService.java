@@ -20,6 +20,8 @@ import java.time.LocalDateTime;
 
 @Service
 public class AuthService {
+    private static final String PASSWORD_PROVIDER = "PASSWORD";
+
     private final UserAccountRepository userAccountRepository;
     private final UserProfileRepository userProfileRepository;
     private final UserAuthIdentityRepository userAuthIdentityRepository;
@@ -66,7 +68,7 @@ public class AuthService {
     }
 
     @Transactional
-    public LoginResponse login(LoginRequest request) {
+    public LoginResponse loginWithPassword(LoginRequest request) {
         String account = firstNotBlank(request.account(), request.username());
         if (account == null) {
             throw BusinessException.badRequest("username or account is required");
@@ -79,8 +81,11 @@ public class AuthService {
             throw BusinessException.unauthorized("invalid username or password");
         }
 
-        user.setLastLoginAt(LocalDateTime.now());
+        LocalDateTime loginAt = LocalDateTime.now();
+        user.setLastLoginAt(loginAt);
         userAccountRepository.save(user);
+        touchPasswordIdentity(user, loginAt);
+
         String token = jwtService.generateToken(user.getId(), user.getUsername());
         return new LoginResponse(token, toProfile(user));
     }
@@ -124,10 +129,28 @@ public class AuthService {
     private void createPasswordIdentity(UserAccount user) {
         UserAuthIdentity identity = new UserAuthIdentity();
         identity.setUserId(user.getId());
-        identity.setProvider("PASSWORD");
+        identity.setProvider(PASSWORD_PROVIDER);
         identity.setProviderUserId(user.getUsername());
         identity.setCredentialHash(user.getPasswordHash());
         identity.setBoundAt(LocalDateTime.now());
+        userAuthIdentityRepository.save(identity);
+    }
+
+    private void touchPasswordIdentity(UserAccount user, LocalDateTime loginAt) {
+        UserAuthIdentity identity = userAuthIdentityRepository
+                .findByUserIdAndProviderAndDeletedFalse(user.getId(), PASSWORD_PROVIDER)
+                .orElseGet(() -> {
+                    UserAuthIdentity created = new UserAuthIdentity();
+                    created.setUserId(user.getId());
+                    created.setProvider(PASSWORD_PROVIDER);
+                    created.setProviderUserId(user.getUsername());
+                    created.setCredentialHash(user.getPasswordHash());
+                    created.setBoundAt(loginAt);
+                    return created;
+                });
+        identity.setProviderUserId(user.getUsername());
+        identity.setCredentialHash(user.getPasswordHash());
+        identity.setLastLoginAt(loginAt);
         userAuthIdentityRepository.save(identity);
     }
 
