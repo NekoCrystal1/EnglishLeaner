@@ -13,11 +13,14 @@
 #include <QListWidget>
 #include <QMessageBox>
 #include <QPalette>
+#include <QPair>
 #include <QPlainTextEdit>
 #include <QProgressBar>
 #include <QPushButton>
 #include <QRandomGenerator>
+#include <QResizeEvent>
 #include <QScrollArea>
+#include <QSizePolicy>
 #include <QSpinBox>
 #include <QStackedWidget>
 #include <QTabWidget>
@@ -31,7 +34,7 @@ EnglishLearner::EnglishLearner(QWidget* parent)
 {
     setWindowTitle(QStringLiteral("LingoPulse 客户端"));
     resize(1120, 760);
-    setMinimumSize(980, 660);
+    setMinimumSize(390, 620);
 
     buildUi();
     applyTheme();
@@ -48,6 +51,12 @@ EnglishLearner::EnglishLearner(QWidget* parent)
 
 EnglishLearner::~EnglishLearner() = default;
 
+void EnglishLearner::resizeEvent(QResizeEvent* event)
+{
+    QMainWindow::resizeEvent(event);
+    applyAdaptiveLayout();
+}
+
 void EnglishLearner::buildUi()
 {
     QWidget* rootPanel = new QWidget(this);
@@ -60,16 +69,34 @@ void EnglishLearner::buildUi()
 
     rootLayout->addWidget(createHeader(rootPanel));
 
-    navTabs = new QTabWidget(rootPanel);
-    navTabs->setObjectName("navTabs");
-    navTabs->setDocumentMode(true);
-    navTabs->setTabPosition(QTabWidget::South);
-    rootLayout->addWidget(navTabs, 1);
+    QHBoxLayout* shellLayout = new QHBoxLayout();
+    shellLayout->setContentsMargins(0, 0, 0, 0);
+    shellLayout->setSpacing(14);
 
-    navTabs->addTab(createWordModule(navTabs), QStringLiteral("单词"));
-    navTabs->addTab(createListeningSpeakingModule(navTabs), QStringLiteral("听说"));
-    navTabs->addTab(createReadingModule(navTabs), QStringLiteral("阅读"));
-    navTabs->addTab(createMineModule(navTabs), QStringLiteral("我的"));
+    sidebarPanel = qobject_cast<QFrame*>(createSidebar(rootPanel));
+    shellLayout->addWidget(sidebarPanel);
+
+    pageStack = new QStackedWidget(rootPanel);
+    pageStack->setObjectName("pageStack");
+    pageStack->addWidget(createTodayModule(pageStack));
+    pageStack->addWidget(createWordModule(pageStack));
+    pageStack->addWidget(createPracticeModule(pageStack));
+    pageStack->addWidget(createContentModule(pageStack));
+    pageStack->addWidget(createReadingModule(pageStack));
+    pageStack->addWidget(createListeningSpeakingModule(pageStack));
+    pageStack->addWidget(createMineModule(pageStack));
+    shellLayout->addWidget(pageStack, 1);
+
+    statusPanel = qobject_cast<QFrame*>(createStatusPanel(rootPanel));
+    shellLayout->addWidget(statusPanel);
+
+    rootLayout->addLayout(shellLayout, 1);
+
+    bottomNavBar = qobject_cast<QFrame*>(createBottomNav(rootPanel));
+    rootLayout->addWidget(bottomNavBar);
+
+    switchPage(PageToday);
+    applyAdaptiveLayout();
 }
 
 QWidget* EnglishLearner::createHeader(QWidget* parent)
@@ -98,6 +125,209 @@ QWidget* EnglishLearner::createHeader(QWidget* parent)
 
     connect(btnSyncNow, &QPushButton::clicked, this, &EnglishLearner::onSyncNow);
     return headerCard;
+}
+
+QWidget* EnglishLearner::createSidebar(QWidget* parent)
+{
+    QFrame* panel = createCard(parent, QStringLiteral("sidebarPanel"));
+    panel->setMinimumWidth(210);
+    panel->setMaximumWidth(260);
+
+    QVBoxLayout* layout = new QVBoxLayout(panel);
+    layout->setContentsMargins(12, 14, 12, 14);
+    layout->setSpacing(8);
+
+    QLabel* learningGroup = new QLabel(QStringLiteral("学习"), panel);
+    learningGroup->setObjectName("navGroupTitle");
+    layout->addWidget(learningGroup);
+
+    const QList<QPair<QString, int>> learningItems{
+        {QStringLiteral("今日"), PageToday},
+        {QStringLiteral("单词"), PageWords},
+        {QStringLiteral("练习"), PagePractice}
+    };
+    for (const auto& item : learningItems) {
+        QPushButton* button = createNavButton(item.first, item.second, panel);
+        sideNavButtons.append(button);
+        layout->addWidget(button);
+        connect(button, &QPushButton::clicked, this, &EnglishLearner::onNavigate);
+    }
+
+    QLabel* contentGroup = new QLabel(QStringLiteral("内容"), panel);
+    contentGroup->setObjectName("navGroupTitle");
+    layout->addWidget(contentGroup);
+
+    const QList<QPair<QString, int>> contentItems{
+        {QStringLiteral("阅读"), PageReading},
+        {QStringLiteral("听说"), PageListeningSpeaking}
+    };
+    for (const auto& item : contentItems) {
+        QPushButton* button = createNavButton(item.first, item.second, panel);
+        sideNavButtons.append(button);
+        layout->addWidget(button);
+        connect(button, &QPushButton::clicked, this, &EnglishLearner::onNavigate);
+    }
+
+    QLabel* personalGroup = new QLabel(QStringLiteral("个人"), panel);
+    personalGroup->setObjectName("navGroupTitle");
+    layout->addWidget(personalGroup);
+
+    QPushButton* mineButton = createNavButton(QStringLiteral("我的"), PageMine, panel);
+    sideNavButtons.append(mineButton);
+    layout->addWidget(mineButton);
+    connect(mineButton, &QPushButton::clicked, this, &EnglishLearner::onNavigate);
+
+    layout->addStretch();
+    return panel;
+}
+
+QWidget* EnglishLearner::createBottomNav(QWidget* parent)
+{
+    QFrame* panel = createCard(parent, QStringLiteral("bottomNavBar"));
+    QHBoxLayout* layout = new QHBoxLayout(panel);
+    layout->setContentsMargins(8, 8, 8, 8);
+    layout->setSpacing(6);
+
+    const QList<QPair<QString, int>> items{
+        {QStringLiteral("今日"), PageToday},
+        {QStringLiteral("单词"), PageWords},
+        {QStringLiteral("练习"), PagePractice},
+        {QStringLiteral("内容"), PageContent},
+        {QStringLiteral("我的"), PageMine}
+    };
+
+    for (const auto& item : items) {
+        QPushButton* button = createNavButton(item.first, item.second, panel);
+        button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+        bottomNavButtons.append(button);
+        layout->addWidget(button);
+        connect(button, &QPushButton::clicked, this, &EnglishLearner::onNavigate);
+    }
+
+    return panel;
+}
+
+QWidget* EnglishLearner::createStatusPanel(QWidget* parent)
+{
+    QFrame* panel = createCard(parent, QStringLiteral("statusPanel"));
+    panel->setMinimumWidth(250);
+    panel->setMaximumWidth(300);
+
+    QVBoxLayout* layout = new QVBoxLayout(panel);
+    layout->setContentsMargins(14, 14, 14, 14);
+    layout->setSpacing(12);
+
+    layout->addWidget(createSectionTitle(QStringLiteral("今日状态"), panel));
+    labelPanelToday = new QLabel(panel);
+    labelPanelToday->setObjectName("moduleDescription");
+    labelPanelToday->setWordWrap(true);
+    layout->addWidget(labelPanelToday);
+
+    layout->addWidget(createSectionTitle(QStringLiteral("当前计划"), panel));
+    labelPanelPlan = new QLabel(panel);
+    labelPanelPlan->setObjectName("moduleDescription");
+    labelPanelPlan->setWordWrap(true);
+    layout->addWidget(labelPanelPlan);
+
+    layout->addWidget(createSectionTitle(QStringLiteral("同步"), panel));
+    labelPanelSync = new QLabel(panel);
+    labelPanelSync->setObjectName("moduleDescription");
+    labelPanelSync->setWordWrap(true);
+    layout->addWidget(labelPanelSync);
+
+    QPushButton* syncButton = createActionButton(QStringLiteral("立即同步"), QStringLiteral("ghostButton"), panel);
+    layout->addWidget(syncButton);
+    connect(syncButton, &QPushButton::clicked, this, &EnglishLearner::onSyncNow);
+
+    layout->addStretch();
+    return panel;
+}
+
+QPushButton* EnglishLearner::createNavButton(const QString& text, int pageIndex, QWidget* parent) const
+{
+    QPushButton* button = new QPushButton(text, parent);
+    button->setObjectName("navButton");
+    button->setCheckable(true);
+    button->setProperty("pageIndex", pageIndex);
+    return button;
+}
+
+QWidget* EnglishLearner::createTodayModule(QWidget* parent)
+{
+    QScrollArea* scroll = new QScrollArea(parent);
+    scroll->setObjectName("plainScroll");
+    scroll->setWidgetResizable(true);
+    scroll->setFrameShape(QFrame::NoFrame);
+
+    QWidget* page = new QWidget(scroll);
+    QVBoxLayout* layout = new QVBoxLayout(page);
+    layout->setContentsMargins(14, 14, 14, 14);
+    layout->setSpacing(12);
+
+    QFrame* hero = createCard(page, QStringLiteral("todayHeroCard"));
+    QVBoxLayout* heroLayout = new QVBoxLayout(hero);
+    heroLayout->setContentsMargins(18, 18, 18, 18);
+    heroLayout->setSpacing(10);
+
+    labelTodayDate = new QLabel(hero);
+    labelTodayDate->setObjectName("heroDate");
+    labelTodayFocus = new QLabel(hero);
+    labelTodayFocus->setObjectName("dailyWord");
+    labelTodayFocus->setWordWrap(true);
+    labelTodayTaskSummary = new QLabel(hero);
+    labelTodayTaskSummary->setObjectName("dailyMeaning");
+    labelTodayTaskSummary->setWordWrap(true);
+
+    heroLayout->addWidget(labelTodayDate);
+    heroLayout->addWidget(labelTodayFocus);
+    heroLayout->addWidget(labelTodayTaskSummary);
+    layout->addWidget(hero);
+
+    QFrame* taskCard = createCard(page, QStringLiteral("entryActionCard"));
+    QGridLayout* taskLayout = new QGridLayout(taskCard);
+    taskLayout->setContentsMargins(16, 16, 16, 16);
+    taskLayout->setHorizontalSpacing(10);
+    taskLayout->setVerticalSpacing(10);
+    taskLayout->addWidget(createSectionTitle(QStringLiteral("今日任务队列"), taskCard), 0, 0, 1, 3);
+
+    progressTodayCompletion = new QProgressBar(taskCard);
+    progressTodayCompletion->setRange(0, 100);
+    progressTodayCompletion->setFormat(QStringLiteral("完成度 %p%"));
+    taskLayout->addWidget(progressTodayCompletion, 1, 0, 1, 3);
+
+    labelTodayStatus = new QLabel(taskCard);
+    labelTodayStatus->setObjectName("moduleDescription");
+    labelTodayStatus->setWordWrap(true);
+    taskLayout->addWidget(labelTodayStatus, 2, 0, 1, 3);
+
+    QPushButton* reviewButton = createActionButton(QStringLiteral("继续复习"), QStringLiteral("primaryButton"), taskCard);
+    QPushButton* learnButton = createActionButton(QStringLiteral("开始新词"), QStringLiteral("secondaryButton"), taskCard);
+    QPushButton* contentButton = createActionButton(QStringLiteral("内容训练"), QStringLiteral("ghostButton"), taskCard);
+    taskLayout->addWidget(reviewButton, 3, 0);
+    taskLayout->addWidget(learnButton, 3, 1);
+    taskLayout->addWidget(contentButton, 3, 2);
+    layout->addWidget(taskCard);
+
+    QFrame* hintCard = createCard(page);
+    QVBoxLayout* hintLayout = new QVBoxLayout(hintCard);
+    hintLayout->setContentsMargins(16, 16, 16, 16);
+    hintLayout->setSpacing(8);
+    hintLayout->addWidget(createSectionTitle(QStringLiteral("学习节奏"), hintCard));
+    QLabel* hint = new QLabel(
+        QStringLiteral("优先完成到期复习，再引入新词；阅读、听力和口语任务会记录本地进度，离线时也能继续。"),
+        hintCard);
+    hint->setObjectName("moduleDescription");
+    hint->setWordWrap(true);
+    hintLayout->addWidget(hint);
+    layout->addWidget(hintCard);
+
+    layout->addStretch();
+    scroll->setWidget(page);
+
+    connect(reviewButton, &QPushButton::clicked, this, &EnglishLearner::onStartReview);
+    connect(learnButton, &QPushButton::clicked, this, &EnglishLearner::onStartLearn);
+    connect(contentButton, &QPushButton::clicked, this, [this]() { switchPage(PageContent); });
+    return scroll;
 }
 
 QWidget* EnglishLearner::createWordModule(QWidget* parent)
@@ -273,6 +503,106 @@ QWidget* EnglishLearner::createWordPracticePage(QWidget* parent, const QString& 
 
     connect(nextButton, &QPushButton::clicked, this, &EnglishLearner::onLoadNextQuestion);
     connect(backButton, &QPushButton::clicked, this, &EnglishLearner::onBackToWordHome);
+    return page;
+}
+
+QWidget* EnglishLearner::createPracticeModule(QWidget* parent)
+{
+    QWidget* page = new QWidget(parent);
+    QVBoxLayout* layout = new QVBoxLayout(page);
+    layout->setContentsMargins(14, 14, 14, 14);
+    layout->setSpacing(12);
+
+    QHBoxLayout* titleLayout = new QHBoxLayout();
+    titleLayout->addWidget(createSectionTitle(QStringLiteral("练习中心"), page));
+    titleLayout->addStretch();
+    QPushButton* statusButton = createActionButton(QStringLiteral("学习状态"), QStringLiteral("ghostButton"), page);
+    titleLayout->addWidget(statusButton);
+    layout->addLayout(titleLayout);
+
+    QFrame* quizCard = createCard(page, QStringLiteral("entryActionCard"));
+    QVBoxLayout* quizLayout = new QVBoxLayout(quizCard);
+    quizLayout->setContentsMargins(16, 16, 16, 16);
+    quizLayout->setSpacing(10);
+    quizLayout->addWidget(createSectionTitle(QStringLiteral("统一题库"), quizCard));
+    QLabel* quizText = new QLabel(QStringLiteral("从当前词书生成选择题、拼写题和听音辨义题；答题记录统一进入本地队列。"), quizCard);
+    quizText->setObjectName("moduleDescription");
+    quizText->setWordWrap(true);
+    quizLayout->addWidget(quizText);
+    QPushButton* startQuizButton = createActionButton(QStringLiteral("开始专项练习"), QStringLiteral("primaryButton"), quizCard);
+    quizLayout->addWidget(startQuizButton);
+    layout->addWidget(quizCard);
+
+    QGridLayout* grid = new QGridLayout();
+    grid->setSpacing(12);
+
+    QFrame* wrongCard = createCard(page);
+    QVBoxLayout* wrongLayout = new QVBoxLayout(wrongCard);
+    wrongLayout->setContentsMargins(16, 16, 16, 16);
+    wrongLayout->addWidget(createSectionTitle(QStringLiteral("错题复习"), wrongCard));
+    QLabel* wrongText = new QLabel(QStringLiteral("按单词、阅读、听力和口语模块筛选错题，答对后可标记已解决。"), wrongCard);
+    wrongText->setObjectName("moduleDescription");
+    wrongText->setWordWrap(true);
+    wrongLayout->addWidget(wrongText);
+    wrongLayout->addStretch();
+
+    QFrame* favoriteCard = createCard(page);
+    QVBoxLayout* favoriteLayout = new QVBoxLayout(favoriteCard);
+    favoriteLayout->setContentsMargins(16, 16, 16, 16);
+    favoriteLayout->addWidget(createSectionTitle(QStringLiteral("收藏夹"), favoriteCard));
+    QLabel* favoriteText = new QLabel(QStringLiteral("集中查看收藏的单词、题目、文章、听力材料和口语任务。"), favoriteCard);
+    favoriteText->setObjectName("moduleDescription");
+    favoriteText->setWordWrap(true);
+    favoriteLayout->addWidget(favoriteText);
+    favoriteLayout->addStretch();
+
+    grid->addWidget(wrongCard, 0, 0);
+    grid->addWidget(favoriteCard, 0, 1);
+    layout->addLayout(grid, 1);
+
+    connect(statusButton, &QPushButton::clicked, this, &EnglishLearner::onOpenStudyStatus);
+    connect(startQuizButton, &QPushButton::clicked, this, &EnglishLearner::onStartReview);
+    return page;
+}
+
+QWidget* EnglishLearner::createContentModule(QWidget* parent)
+{
+    QWidget* page = new QWidget(parent);
+    QVBoxLayout* layout = new QVBoxLayout(page);
+    layout->setContentsMargins(14, 14, 14, 14);
+    layout->setSpacing(12);
+
+    layout->addWidget(createSectionTitle(QStringLiteral("内容训练"), page));
+
+    QFrame* readingCard = createCard(page, QStringLiteral("entryActionCard"));
+    QVBoxLayout* readingLayout = new QVBoxLayout(readingCard);
+    readingLayout->setContentsMargins(16, 16, 16, 16);
+    readingLayout->setSpacing(10);
+    readingLayout->addWidget(createSectionTitle(QStringLiteral("阅读理解"), readingCard));
+    QLabel* readingText = new QLabel(QStringLiteral("继续文章阅读、记录阅读位置，并在完成后进入阅读理解题。"), readingCard);
+    readingText->setObjectName("moduleDescription");
+    readingText->setWordWrap(true);
+    readingLayout->addWidget(readingText);
+    QPushButton* openReadingButton = createActionButton(QStringLiteral("进入阅读"), QStringLiteral("primaryButton"), readingCard);
+    readingLayout->addWidget(openReadingButton);
+    layout->addWidget(readingCard);
+
+    QFrame* listeningCard = createCard(page);
+    QVBoxLayout* listeningLayout = new QVBoxLayout(listeningCard);
+    listeningLayout->setContentsMargins(16, 16, 16, 16);
+    listeningLayout->setSpacing(10);
+    listeningLayout->addWidget(createSectionTitle(QStringLiteral("听力与口语"), listeningCard));
+    QLabel* listeningText = new QLabel(QStringLiteral("完成听力材料、查看文本稿，或进入口语任务进行录音/本地评测。"), listeningCard);
+    listeningText->setObjectName("moduleDescription");
+    listeningText->setWordWrap(true);
+    listeningLayout->addWidget(listeningText);
+    QPushButton* openListeningButton = createActionButton(QStringLiteral("进入听说"), QStringLiteral("secondaryButton"), listeningCard);
+    listeningLayout->addWidget(openListeningButton);
+    layout->addWidget(listeningCard);
+    layout->addStretch();
+
+    connect(openReadingButton, &QPushButton::clicked, this, [this]() { switchPage(PageReading); });
+    connect(openListeningButton, &QPushButton::clicked, this, [this]() { switchPage(PageListeningSpeaking); });
     return page;
 }
 
@@ -483,10 +813,26 @@ QWidget#rootPanel {
 }
 QFrame#headerCard,
 QFrame#card,
-QFrame#entryActionCard {
+QFrame#entryActionCard,
+QFrame#sidebarPanel,
+QFrame#bottomNavBar,
+QFrame#statusPanel {
     background: %3;
     border: 1px solid %4;
     border-radius: 12px;
+}
+QFrame#todayHeroCard {
+    border-radius: 14px;
+    border: none;
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 %7, stop:1 #42b883);
+}
+QFrame#todayHeroCard QLabel { color: white; }
+QScrollArea#plainScroll {
+    border: none;
+    background: transparent;
+}
+QScrollArea#plainScroll > QWidget > QWidget {
+    background: transparent;
 }
 QLabel { color: %5; }
 QLabel#appName { font-size: 22px; font-weight: 700; }
@@ -497,6 +843,12 @@ QLabel#welcomeText, QLabel#scoreText, QLabel#syncText, QLabel#moduleDescription 
 QLabel#sectionTitle {
     font-size: 17px;
     font-weight: 650;
+}
+QLabel#navGroupTitle {
+    color: %6;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 10px 8px 2px 8px;
 }
 QLabel#questionWord {
     font-size: 34px;
@@ -510,6 +862,7 @@ QLabel#answerFeedback {
 QPushButton#primaryButton,
 QPushButton#secondaryButton,
 QPushButton#ghostButton,
+QPushButton#navButton,
 QPushButton#modeLearnButton,
 QPushButton#modeReviewButton,
 QPushButton#optionButton {
@@ -529,6 +882,7 @@ QPushButton#modeLearnButton:hover {
 }
 QPushButton#secondaryButton,
 QPushButton#ghostButton,
+QPushButton#navButton,
 QPushButton#modeReviewButton,
 QPushButton#optionButton {
     background: %8;
@@ -537,9 +891,19 @@ QPushButton#optionButton {
 }
 QPushButton#secondaryButton:hover,
 QPushButton#ghostButton:hover,
+QPushButton#navButton:hover,
 QPushButton#modeReviewButton:hover,
 QPushButton#optionButton:hover {
     background: %9;
+}
+QPushButton#navButton {
+    text-align: left;
+    min-height: 34px;
+}
+QPushButton#navButton:checked {
+    background: %10;
+    color: %5;
+    border-color: %7;
 }
 QComboBox, QSpinBox, QListWidget, QTextBrowser {
     background: %8;
@@ -594,9 +958,110 @@ QTabWidget#navTabs QTabBar::tab:selected {
                            accent, soft, hover, active, soft, warm));
 }
 
+void EnglishLearner::applyAdaptiveLayout()
+{
+    const bool shouldCompact = width() < 760 || height() > width() * 1.25;
+    compactMode = shouldCompact;
+    if (sidebarPanel != nullptr) {
+        sidebarPanel->setVisible(!compactMode);
+    }
+    if (statusPanel != nullptr) {
+        statusPanel->setVisible(!compactMode);
+    }
+    if (bottomNavBar != nullptr) {
+        bottomNavBar->setVisible(compactMode);
+    }
+    if (labelWelcome != nullptr) {
+        labelWelcome->setVisible(!compactMode);
+    }
+    if (labelScore != nullptr) {
+        labelScore->setVisible(!compactMode);
+    }
+
+    if (compactMode) {
+        setMinimumSize(390, 620);
+    } else {
+        setMinimumSize(980, 660);
+    }
+    updateNavigationState();
+}
+
+void EnglishLearner::switchPage(int pageIndex)
+{
+    if (pageStack == nullptr || pageIndex < 0 || pageIndex >= pageStack->count()) {
+        return;
+    }
+    currentPageIndex = pageIndex;
+    pageStack->setCurrentIndex(pageIndex);
+    updateNavigationState();
+}
+
+void EnglishLearner::updateNavigationState()
+{
+    const auto updateButtons = [this](const QList<QPushButton*>& buttons) {
+        for (QPushButton* button : buttons) {
+            if (button == nullptr) {
+                continue;
+            }
+            const int buttonPage = button->property("pageIndex").toInt();
+            const bool selected = buttonPage == currentPageIndex
+                || (buttonPage == PageContent
+                    && (currentPageIndex == PageReading || currentPageIndex == PageListeningSpeaking));
+            button->setChecked(selected);
+        }
+    };
+    updateButtons(sideNavButtons);
+    updateButtons(bottomNavButtons);
+}
+
+void EnglishLearner::updateStatusPanel()
+{
+    if (labelPanelToday != nullptr) {
+        labelPanelToday->setText(todaySummaryText());
+    }
+
+    if (labelPanelPlan != nullptr) {
+        const QList<LocalBook> books = m_store.books();
+        if (books.isEmpty()) {
+            labelPanelPlan->setText(QStringLiteral("暂无词书，请导入本地内容或等待服务端下发。"));
+        } else {
+            LocalBook selected = books.first();
+            const qint64 selectedId = comboBooks == nullptr ? 0 : comboBooks->currentData().toLongLong();
+            for (const LocalBook& book : books) {
+                if (book.localId == selectedId) {
+                    selected = book;
+                    break;
+                }
+            }
+            const int percent = selected.itemCount <= 0 ? 0 : qMin(100, selected.learnedCount * 100 / selected.itemCount);
+            labelPanelPlan->setText(QStringLiteral("%1\n进度 %2%，待复习 %3，已掌握 %4。")
+                                        .arg(selected.title)
+                                        .arg(percent)
+                                        .arg(selected.dueCount)
+                                        .arg(selected.masteredCount));
+        }
+    }
+
+    if (labelPanelSync != nullptr) {
+        labelPanelSync->setText(QStringLiteral("%1\n待同步变更 %2，未同步学习事件 %3。")
+                                    .arg(syncStatusText())
+                                    .arg(m_store.pendingOutboxCount())
+                                    .arg(m_store.unsyncedEventCount()));
+    }
+}
+
 void EnglishLearner::updateDailyVisual()
 {
     const QDate today = QDate::currentDate();
+    if (labelTodayDate != nullptr) {
+        labelTodayDate->setText(QStringLiteral("%1 · 今日学习").arg(today.toString("yyyy-MM-dd")));
+    }
+    if (labelTodayFocus != nullptr) {
+        labelTodayFocus->setText(QStringLiteral("今日励志词：%1").arg(generateDailyWord()));
+    }
+    if (labelTodayTaskSummary != nullptr) {
+        labelTodayTaskSummary->setText(generateDailyMeaning());
+    }
     labelDate->setText(QStringLiteral("今日主题 - %1").arg(today.toString("yyyy-MM-dd")));
     labelDailyWord->setText(QStringLiteral("今日励志词：%1").arg(generateDailyWord()));
     labelDailyMeaning->setText(generateDailyMeaning());
@@ -634,6 +1099,7 @@ void EnglishLearner::onLoginSuccess(const UserProfile& user)
     setWindowTitle(QStringLiteral("LingoPulse 客户端 - %1").arg(toDisplayName(m_currentUser.username)));
     labelWelcome->setText(QStringLiteral("欢迎，%1").arg(toDisplayName(m_currentUser.username)));
     refreshAll();
+    switchPage(PageToday);
     onLoadNextQuestion();
     onRefreshRanking();
 }
@@ -668,6 +1134,13 @@ void EnglishLearner::refreshTodaySummary()
     const LocalStudySummary summary = m_store.todaySummary();
     const int totalAnswered = summary.correctCount + summary.wrongCount;
     const int accuracy = totalAnswered == 0 ? 0 : (summary.correctCount * 100 / totalAnswered);
+    const int completion = qMin(100, summary.completedTasks * 20);
+    if (progressTodayCompletion != nullptr) {
+        progressTodayCompletion->setValue(completion);
+    }
+    if (labelTodayStatus != nullptr) {
+        labelTodayStatus->setText(todaySummaryText());
+    }
     labelTodayStats->setText(QStringLiteral(
                                  "新学 %1 个，复习 %2 个，正确率 %3%，学习 %4 分钟，今日积分 %+5，完成任务 %6 个。")
                                  .arg(summary.newWords)
@@ -684,6 +1157,7 @@ void EnglishLearner::refreshTodaySummary()
                                 .arg(summary.reviewWords)
                                 .arg(summary.correctCount)
                                 .arg(summary.wrongCount));
+    updateStatusPanel();
 }
 
 void EnglishLearner::refreshReadingList()
@@ -757,6 +1231,7 @@ void EnglishLearner::refreshSyncState()
     labelOutbox->setText(QStringLiteral("待同步变更：%1，未同步学习事件：%2")
                              .arg(m_store.pendingOutboxCount())
                              .arg(m_store.unsyncedEventCount()));
+    updateStatusPanel();
 }
 
 void EnglishLearner::updateScoreDisplay()
@@ -794,11 +1269,27 @@ void EnglishLearner::updateWordProgressDisplay()
                                    .arg(selected.dueCount)
                                    .arg(selected.masteredCount)
                                    .arg(selected.storageMode, selected.sourceType));
+    updateStatusPanel();
+}
+
+void EnglishLearner::onNavigate()
+{
+    QPushButton* button = qobject_cast<QPushButton*>(sender());
+    if (button == nullptr) {
+        return;
+    }
+    switchPage(button->property("pageIndex").toInt());
 }
 
 void EnglishLearner::onOpenStudyStatus()
 {
     const LocalStudySummary summary = m_store.todaySummary();
+    updateStatusPanel();
+    if (!compactMode && statusPanel != nullptr) {
+        statusPanel->setVisible(true);
+        return;
+    }
+
     QMessageBox::information(this,
                              QStringLiteral("学习状态"),
                              QStringLiteral("今日新学：%1\n今日复习：%2\n正确：%3\n错误：%4\n待同步：%5")
@@ -811,18 +1302,21 @@ void EnglishLearner::onOpenStudyStatus()
 
 void EnglishLearner::onStartLearn()
 {
+    switchPage(PageWords);
     enterPracticeMode(QStringLiteral("LEARN"));
     wordStack->setCurrentWidget(wordLearnPage);
 }
 
 void EnglishLearner::onStartReview()
 {
+    switchPage(PageWords);
     enterPracticeMode(QStringLiteral("REVIEW"));
     wordStack->setCurrentWidget(wordLearnPage);
 }
 
 void EnglishLearner::onBackToWordHome()
 {
+    switchPage(PageWords);
     wordStack->setCurrentWidget(wordHomePage);
     refreshAll();
 }
@@ -1136,6 +1630,20 @@ void EnglishLearner::onCreateStudyGroup()
         refreshCommunityList();
         refreshSyncState();
     }
+}
+
+QString EnglishLearner::todaySummaryText() const
+{
+    const LocalStudySummary summary = m_store.todaySummary();
+    const int totalAnswered = summary.correctCount + summary.wrongCount;
+    const int accuracy = totalAnswered == 0 ? 0 : summary.correctCount * 100 / totalAnswered;
+    return QStringLiteral("新学 %1，复习 %2，正确率 %3%，学习 %4 分钟，积分 %+5，完成任务 %6。")
+        .arg(summary.newWords)
+        .arg(summary.reviewWords)
+        .arg(accuracy)
+        .arg(summary.studySeconds / 60)
+        .arg(summary.scoreDelta)
+        .arg(summary.completedTasks);
 }
 
 QString EnglishLearner::generateDailyWord() const

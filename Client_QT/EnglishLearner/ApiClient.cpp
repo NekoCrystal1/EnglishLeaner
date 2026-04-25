@@ -57,10 +57,14 @@ QString ApiClient::token() const
 
 bool ApiClient::registerUser(const QString& username, const QString& password, QString* errorMessage)
 {
-    const QJsonObject body{
-        {"username", username.trimmed()},
+    const QString account = username.trimmed();
+    QJsonObject body{
+        {"username", account},
         {"password", password}
     };
+    if (account.contains('@')) {
+        body.insert("email", account);
+    }
     const HttpResult result = sendJsonRequest("/api/v1/auth/register", "POST", body, false);
 
     QJsonValue data;
@@ -70,11 +74,13 @@ bool ApiClient::registerUser(const QString& username, const QString& password, Q
 bool ApiClient::login(const QString& username, const QString& password,
                       UserProfile* user, QString* token, QString* errorMessage)
 {
+    const QString account = username.trimmed();
     const QJsonObject body{
-        {"username", username.trimmed()},
+        {"account", account},
+        {"username", account},
         {"password", password}
     };
-    const HttpResult result = sendJsonRequest("/api/v1/auth/login", "POST", body, false);
+    const HttpResult result = sendJsonRequest("/api/v1/auth/login/password", "POST", body, false);
 
     QJsonValue dataValue;
     if (!parseApiEnvelope(result, &dataValue, errorMessage)) {

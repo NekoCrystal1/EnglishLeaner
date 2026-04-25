@@ -27,10 +27,10 @@ private slots:
 
 private:
     enum class LoginType {
-        Phone = 0,
-        Wechat = 1,
-        QQ = 2,
-        Email = 3
+        Account = 0,
+        Phone = 1,
+        Wechat = 2,
+        QQ = 3
     };
 
     void applyTheme();
@@ -44,7 +44,7 @@ private:
 private:
     ApiClient* m_apiClient;
     UserProfile m_loggedInUser;
-    LoginType m_loginType = LoginType::Phone;
+    LoginType m_loginType = LoginType::Account;
 
     QButtonGroup* loginTypeGroup;
     QFrame* loginCard;
