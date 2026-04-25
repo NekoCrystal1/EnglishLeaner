@@ -34,3 +34,4 @@ Server/*.log
 Web/node_modules/
 Web/dist/
 Web/.env
+Web/*.log

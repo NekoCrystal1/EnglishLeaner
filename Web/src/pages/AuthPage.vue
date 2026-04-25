@@ -2,8 +2,8 @@
   <div class="auth-page">
     <section class="brand-panel">
       <div class="brand-badge">English Learner</div>
-      <h1>交互式英语自学系统</h1>
-      <p>从今天的单词、刷题和积分开始，稳稳往前走。</p>
+      <h1>把单词、测验和学习进度放在一起</h1>
+      <p>登录后可以学习词书、记录复习情况，并通过测验获得积分。</p>
     </section>
 
     <section class="form-panel">
@@ -114,11 +114,11 @@ const loginRules = {
 const registerRules = {
   username: [
     { required: true, message: "请输入用户名", trigger: "blur" },
-    { min: 2, max: 32, message: "用户名长度需要在 2-32 个字符之间", trigger: "blur" }
+    { min: 2, max: 32, message: "用户名长度为 2-32 个字符", trigger: "blur" }
   ],
   password: [
     { required: true, message: "请输入密码", trigger: "blur" },
-    { min: 6, max: 64, message: "密码长度需要在 6-64 个字符之间", trigger: "blur" }
+    { min: 6, max: 64, message: "密码长度为 6-64 个字符", trigger: "blur" }
   ],
   confirmPassword: [
     {
@@ -169,7 +169,7 @@ async function submitRegister() {
       username: registerForm.username,
       password: registerForm.password
     });
-    ElMessage.success("注册成功，已为你登录");
+    ElMessage.success("注册成功，已自动登录");
     router.replace("/");
   } catch (error) {
     if (error?.message) {

@@ -1,7 +1,7 @@
 <template>
   <div>
-    <h1 class="page-title">刷题练习</h1>
-    <p class="page-subtitle">系统会随机抽取单词题，提交后即时反馈对错与积分变动。</p>
+    <h1 class="page-title">单词测验</h1>
+    <p class="page-subtitle">选择单词对应的释义，答题后会更新积分。</p>
 
     <el-card v-loading="loadingQuestion">
       <template #header>
@@ -11,7 +11,7 @@
         </div>
       </template>
 
-      <el-empty v-if="!question" description="暂无题目，请点击“换一题”重试" />
+      <el-empty v-if="!question" description="暂无题目，请先确认后端已导入词库。" />
 
       <template v-else>
         <div class="question-word">{{ question.word }}</div>
@@ -38,15 +38,15 @@
 
         <el-alert
           v-if="result"
-          :title="result.correct ? '回答正确，继续加油！' : '回答错误，再试下一题'"
+          :title="result.correct ? '回答正确' : '回答错误'"
           :type="result.correct ? 'success' : 'error'"
           :closable="false"
           show-icon
         >
           <template #default>
             <div class="feedback-line">正确答案：{{ result.correctAnswer }}</div>
-            <div class="feedback-line">本题积分：{{ result.scoreDelta }}</div>
-            <div class="feedback-line">当前总积分：{{ result.totalScore }}</div>
+            <div class="feedback-line">积分变化：{{ result.scoreDelta }}</div>
+            <div class="feedback-line">当前总分：{{ result.totalScore }}</div>
           </template>
         </el-alert>
       </template>
@@ -76,7 +76,7 @@ async function loadNextQuestion() {
     selectedAnswer.value = "";
     result.value = null;
   } catch (error) {
-    ElMessage.error(error.message || "获取题目失败");
+    ElMessage.error(error.message || "加载题目失败");
   } finally {
     loadingQuestion.value = false;
   }

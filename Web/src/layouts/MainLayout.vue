@@ -15,15 +15,15 @@
       >
         <el-menu-item index="/">
           <el-icon><House /></el-icon>
-          <span>概览</span>
+          <span>首页</span>
         </el-menu-item>
         <el-menu-item index="/words">
           <el-icon><Collection /></el-icon>
-          <span>单词计划</span>
+          <span>单词学习</span>
         </el-menu-item>
         <el-menu-item index="/quiz">
           <el-icon><EditPen /></el-icon>
-          <span>刷题</span>
+          <span>单词测验</span>
         </el-menu-item>
         <el-menu-item index="/ranking">
           <el-icon><Trophy /></el-icon>
@@ -33,7 +33,7 @@
 
       <div class="header-right">
         <el-tag type="success" effect="light">
-          总积分 {{ authStore.user?.totalScore ?? 0 }}
+          总分：{{ authStore.user?.totalScore ?? 0 }}
         </el-tag>
         <el-dropdown>
           <span class="user-trigger">
@@ -42,8 +42,8 @@
           </span>
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item @click="goHome">学习概览</el-dropdown-item>
-              <el-dropdown-item @click="goWords">单词计划</el-dropdown-item>
+              <el-dropdown-item @click="goHome">返回首页</el-dropdown-item>
+              <el-dropdown-item @click="goWords">单词学习</el-dropdown-item>
               <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
             </el-dropdown-menu>
           </template>

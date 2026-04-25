@@ -1,13 +1,13 @@
 <template>
   <div>
     <h1 class="page-title">积分排行榜</h1>
-    <p class="page-subtitle">查看全站积分排名，可切换查看 Top 10 / 20 / 50。</p>
+    <p class="page-subtitle">查看当前学习积分排名，支持 Top 10 / 20 / 50。</p>
 
     <el-card>
       <template #header>
         <div class="toolbar">
           <el-space>
-            <span>展示数量</span>
+            <span>显示范围</span>
             <el-select v-model="limit" style="width: 140px;" @change="loadRanking">
               <el-option :value="10" label="Top 10" />
               <el-option :value="20" label="Top 20" />
@@ -21,7 +21,7 @@
       <el-table :data="rankings" border stripe v-loading="loading">
         <el-table-column prop="rank" label="排名" width="90" />
         <el-table-column prop="username" label="用户名" />
-        <el-table-column prop="totalScore" label="总积分" width="120" />
+        <el-table-column prop="totalScore" label="总分" width="120" />
       </el-table>
 
       <div class="chart-wrap">

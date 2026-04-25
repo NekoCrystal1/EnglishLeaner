@@ -23,7 +23,7 @@ export const useAuthStore = defineStore("auth", {
   }),
   getters: {
     isLoggedIn: (state) => Boolean(state.token),
-    displayName: (state) => state.user?.displayName || state.user?.username || "未登录"
+    displayName: (state) => state.user?.displayName || state.user?.username || "学习者"
   },
   actions: {
     setToken(token) {
