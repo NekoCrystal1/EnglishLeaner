@@ -1,0 +1,40 @@
+{
+  "source": "ECDICT",
+  "sourceUrl": "https://github.com/skywind3000/ECDICT",
+  "rawCsvUrl": "https://raw.githubusercontent.com/skywind3000/ECDICT/master/ecdict.csv",
+  "license": "MIT",
+  "books": [
+    {
+      "key": "high-school",
+      "title": "高中核心词库",
+      "level": "HIGH_SCHOOL",
+      "path": "vocabulary/ecdict/high-school.json",
+      "itemCount": 3671,
+      "contentHash": "ce0a7fcfdff0ed0b43c5382d25142c79c4c8c82b936bfca4f62c531460b1c838"
+    },
+    {
+      "key": "cet4",
+      "title": "CET4核心词库",
+      "level": "CET4",
+      "path": "vocabulary/ecdict/cet4.json",
+      "itemCount": 3846,
+      "contentHash": "ea6b083d75af86027c4520bf73a59066d998012706208bdd38a5284ebd71a6ba"
+    },
+    {
+      "key": "cet6",
+      "title": "CET6核心词库",
+      "level": "CET6",
+      "path": "vocabulary/ecdict/cet6.json",
+      "itemCount": 5406,
+      "contentHash": "794712e01dd377367fd19435055251d704bcae13b121fe82f8099bc652bc5f49"
+    },
+    {
+      "key": "postgraduate",
+      "title": "考研核心词库",
+      "level": "POSTGRADUATE",
+      "path": "vocabulary/ecdict/postgraduate.json",
+      "itemCount": 4801,
+      "contentHash": "7ca380ded79123eda5a274699e97c4afab1346c5b8ed25d74b7c214c9ecb7dce"
+    }
+  ]
+}

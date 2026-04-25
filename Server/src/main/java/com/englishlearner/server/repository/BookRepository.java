@@ -13,6 +13,8 @@ public interface BookRepository extends JpaRepository<Book, Long> {
 
     Optional<Book> findFirstByBookTypeAndStatusAndOwnerUserIdIsNullAndDeletedFalseOrderByIdAsc(String bookType, String status);
 
+    Optional<Book> findFirstByTitleAndSourceTypeAndOwnerUserIdIsNullAndDeletedFalse(String title, String sourceType);
+
     @Query("""
             select b from Book b
             where b.deleted = false

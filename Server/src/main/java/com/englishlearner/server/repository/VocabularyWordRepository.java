@@ -19,4 +19,6 @@ public interface VocabularyWordRepository extends JpaRepository<VocabularyWord, 
     List<VocabularyWord> findByIdNotAndDeletedFalse(Long id);
 
     List<VocabularyWord> findByIdInAndDeletedFalse(Collection<Long> ids);
+
+    List<VocabularyWord> findByNormalizedWordInAndDeletedFalse(Collection<String> normalizedWords);
 }

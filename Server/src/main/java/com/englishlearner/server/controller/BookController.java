@@ -5,8 +5,10 @@ import com.englishlearner.server.common.BusinessException;
 import com.englishlearner.server.dto.book.BookResponse;
 import com.englishlearner.server.dto.book.BookWordResponse;
 import com.englishlearner.server.dto.book.CreateBookRequest;
+import com.englishlearner.server.dto.book.SystemBookImportResponse;
 import com.englishlearner.server.security.AuthenticatedUser;
 import com.englishlearner.server.service.BookService;
+import com.englishlearner.server.service.SystemVocabularyImportService;
 import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,9 +25,12 @@ import java.util.List;
 @RequestMapping("/api/v1/books")
 public class BookController {
     private final BookService bookService;
+    private final SystemVocabularyImportService systemVocabularyImportService;
 
-    public BookController(BookService bookService) {
+    public BookController(BookService bookService,
+                          SystemVocabularyImportService systemVocabularyImportService) {
         this.bookService = bookService;
+        this.systemVocabularyImportService = systemVocabularyImportService;
     }
 
     @GetMapping
@@ -41,6 +46,13 @@ public class BookController {
                                             Authentication authentication) {
         Long userId = getUserId(authentication);
         return ApiResponse.ok("book created", bookService.createUserBook(userId, request));
+    }
+
+    @PostMapping("/system/import")
+    public ApiResponse<SystemBookImportResponse> importSystemBooks(@RequestParam(required = false) String bookKey,
+                                                                   Authentication authentication) {
+        getUserId(authentication);
+        return ApiResponse.ok("system books imported", systemVocabularyImportService.importSystemBooks(bookKey));
     }
 
     @GetMapping("/{bookId}")
