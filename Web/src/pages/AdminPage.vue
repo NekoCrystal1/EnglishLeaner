@@ -3,7 +3,7 @@
     <div class="admin-heading">
       <div>
         <h1 class="page-title">后台管理</h1>
-        <p class="page-subtitle">用户状态、角色权限和后台入口配置</p>
+        <p class="page-subtitle">用户、内容和权限配置</p>
       </div>
       <el-button :icon="Refresh" :loading="refreshing" @click="reloadAll">刷新</el-button>
     </div>
@@ -16,6 +16,7 @@
     </div>
 
     <section class="admin-panel">
+      <div class="panel-title">用户管理</div>
       <div class="panel-toolbar">
         <div class="filter-group">
           <el-input
@@ -93,6 +94,63 @@
       </div>
     </section>
 
+    <section class="admin-panel">
+      <div class="panel-title">系统书籍上传</div>
+      <el-form ref="systemBookFormRef" :model="systemBookForm" :rules="systemBookRules" label-position="top">
+        <div class="book-form-grid">
+          <el-form-item label="书籍名称" prop="title">
+            <el-input v-model.trim="systemBookForm.title" placeholder="例如：高频阅读材料" clearable />
+          </el-form-item>
+          <el-form-item label="内容类型" prop="bookType">
+            <el-select v-model="systemBookForm.bookType" class="full-width">
+              <el-option label="词书" value="WORD" />
+              <el-option label="阅读" value="READING" />
+              <el-option label="听力" value="LISTENING" />
+              <el-option label="口语" value="SPEAKING" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="语言">
+            <el-input v-model.trim="systemBookForm.language" placeholder="en" clearable />
+          </el-form-item>
+          <el-form-item label="级别">
+            <el-input v-model.trim="systemBookForm.level" placeholder="CET4 / B1 / 初级" clearable />
+          </el-form-item>
+          <el-form-item label="条目数">
+            <el-input-number v-model="systemBookForm.itemCount" :min="0" :max="999999" class="full-width" />
+          </el-form-item>
+          <el-form-item label="封面地址">
+            <el-input v-model.trim="systemBookForm.coverUrl" placeholder="https://..." clearable />
+          </el-form-item>
+          <el-form-item label="内容引用">
+            <el-input v-model.trim="systemBookForm.clientContentRef" placeholder="OSS 地址 / 文件名 / classpath 引用" clearable />
+          </el-form-item>
+          <el-form-item label="内容校验值">
+            <el-input v-model.trim="systemBookForm.contentHash" placeholder="SHA-256 / MD5" clearable />
+          </el-form-item>
+        </div>
+
+        <el-upload
+          v-model:file-list="selectedFileList"
+          class="book-upload"
+          drag
+          :auto-upload="false"
+          :limit="1"
+          :on-change="handleBookFileChange"
+          :on-remove="handleBookFileRemove"
+        >
+          <el-icon class="upload-icon"><UploadFilled /></el-icon>
+          <div class="el-upload__text">拖入文件或点击选择</div>
+        </el-upload>
+
+        <div class="form-actions">
+          <el-button @click="resetSystemBookForm">重置</el-button>
+          <el-button type="primary" :icon="Upload" :loading="creatingSystemBook" @click="createSystemBook">
+            上传系统书籍
+          </el-button>
+        </div>
+      </el-form>
+    </section>
+
     <section class="role-panel">
       <div class="panel-title">角色权限</div>
       <el-table :data="roles" row-key="code" border>
@@ -120,8 +178,8 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { Refresh, Search } from "@element-plus/icons-vue";
-import { adminApi } from "../api/modules";
+import { Refresh, Search, Upload, UploadFilled } from "@element-plus/icons-vue";
+import { adminApi, bookApi } from "../api/modules";
 import { useAuthStore } from "../stores/auth";
 
 const authStore = useAuthStore();
@@ -139,12 +197,31 @@ const page = ref(1);
 const size = ref(10);
 const usersLoading = ref(false);
 const refreshing = ref(false);
+const creatingSystemBook = ref(false);
+const selectedFileList = ref([]);
+const systemBookFormRef = ref();
 
 const filters = reactive({
   keyword: "",
   status: "",
   roleName: ""
 });
+
+const systemBookForm = reactive({
+  title: "",
+  bookType: "WORD",
+  language: "en",
+  level: "",
+  coverUrl: "",
+  itemCount: 0,
+  clientContentRef: "",
+  contentHash: ""
+});
+
+const systemBookRules = {
+  title: [{ required: true, message: "请输入书籍名称", trigger: "blur" }],
+  bookType: [{ required: true, message: "请选择内容类型", trigger: "change" }]
+};
 
 const currentUserId = computed(() => authStore.user?.userId);
 
@@ -243,6 +320,68 @@ async function updateRole(row, roleCode) {
   }
 }
 
+async function createSystemBook() {
+  if (!systemBookFormRef.value) {
+    return;
+  }
+
+  try {
+    await systemBookFormRef.value.validate();
+  } catch {
+    return;
+  }
+
+  creatingSystemBook.value = true;
+  try {
+    await bookApi.createSystem({
+      title: systemBookForm.title,
+      bookType: systemBookForm.bookType,
+      language: systemBookForm.language || "en",
+      level: systemBookForm.level || null,
+      coverUrl: systemBookForm.coverUrl || null,
+      itemCount: systemBookForm.itemCount ?? 0,
+      clientContentRef: systemBookForm.clientContentRef || null,
+      contentHash: systemBookForm.contentHash || null
+    });
+    ElMessage.success("系统书籍已上传");
+    resetSystemBookForm();
+  } catch (error) {
+    ElMessage.error(error.message || "上传系统书籍失败");
+  } finally {
+    creatingSystemBook.value = false;
+  }
+}
+
+function handleBookFileChange(uploadFile) {
+  if (!systemBookForm.title && uploadFile.name) {
+    systemBookForm.title = uploadFile.name.replace(/\.[^.]+$/, "");
+  }
+  if (!systemBookForm.clientContentRef && uploadFile.name) {
+    systemBookForm.clientContentRef = uploadFile.name;
+  }
+}
+
+function handleBookFileRemove() {
+  if (selectedFileList.value.length === 0) {
+    systemBookForm.clientContentRef = "";
+  }
+}
+
+function resetSystemBookForm() {
+  Object.assign(systemBookForm, {
+    title: "",
+    bookType: "WORD",
+    language: "en",
+    level: "",
+    coverUrl: "",
+    itemCount: 0,
+    clientContentRef: "",
+    contentHash: ""
+  });
+  selectedFileList.value = [];
+  systemBookFormRef.value?.clearValidate();
+}
+
 function mergeUser(updated) {
   const index = users.value.findIndex((item) => item.userId === updated.userId);
   if (index >= 0) {
@@ -305,6 +444,13 @@ function formatTime(value) {
   background: #ffffff;
 }
 
+.panel-title {
+  margin-bottom: 12px;
+  font-size: 16px;
+  font-weight: 800;
+  color: #111827;
+}
+
 .panel-toolbar {
   display: flex;
   align-items: center;
@@ -354,11 +500,30 @@ function formatTime(value) {
   margin-top: 14px;
 }
 
-.panel-title {
-  margin-bottom: 12px;
-  font-size: 16px;
-  font-weight: 800;
-  color: #111827;
+.book-form-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.book-upload {
+  margin-top: 4px;
+}
+
+.upload-icon {
+  color: #64748b;
+  font-size: 32px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.full-width {
+  width: 100%;
 }
 
 .permission-list {
@@ -370,6 +535,12 @@ function formatTime(value) {
 .role-code {
   display: block;
   margin-top: 4px;
+}
+
+@media (max-width: 1120px) {
+  .book-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 960px) {
@@ -391,7 +562,8 @@ function formatTime(value) {
 }
 
 @media (max-width: 560px) {
-  .metric-grid {
+  .metric-grid,
+  .book-form-grid {
     grid-template-columns: 1fr;
   }
 }

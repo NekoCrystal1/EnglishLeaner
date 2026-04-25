@@ -57,6 +57,14 @@ public class BookController {
         return ApiResponse.ok("system books imported", systemVocabularyImportService.importSystemBooks(bookKey));
     }
 
+    @PostMapping("/system")
+    @PreAuthorize("hasAuthority('CONTENT_IMPORT')")
+    public ApiResponse<BookResponse> createSystemBook(@Valid @RequestBody CreateBookRequest request,
+                                                      Authentication authentication) {
+        getUserId(authentication);
+        return ApiResponse.ok("system book created", bookService.createSystemBook(request));
+    }
+
     @GetMapping("/{bookId}")
     public ApiResponse<BookResponse> get(@PathVariable Long bookId,
                                          Authentication authentication) {

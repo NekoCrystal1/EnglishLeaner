@@ -64,6 +64,24 @@ public class BookService {
         return toBookResponse(bookRepository.save(book));
     }
 
+    @Transactional
+    public BookResponse createSystemBook(CreateBookRequest request) {
+        Book book = new Book();
+        book.setTitle(request.title().trim());
+        book.setBookType(request.bookType().trim().toUpperCase());
+        book.setSourceType("SYSTEM");
+        book.setOwnerUserId(null);
+        book.setLanguage(defaultValue(request.language(), "en"));
+        book.setLevel(trimToNull(request.level()));
+        book.setCoverUrl(trimToNull(request.coverUrl()));
+        book.setItemCount(request.itemCount() == null ? 0 : Math.max(0, request.itemCount()));
+        book.setContentStorageMode(trimToNull(request.clientContentRef()) == null ? "SERVER" : "EXTERNAL_REF");
+        book.setClientContentRef(trimToNull(request.clientContentRef()));
+        book.setContentHash(trimToNull(request.contentHash()));
+        book.setStatus("ACTIVE");
+        return toBookResponse(bookRepository.save(book));
+    }
+
     public List<BookWordResponse> listBookWords(Long userId, Long bookId) {
         Book book = findVisibleBook(userId, bookId);
         List<BookWord> relations = bookWordRepository.findByBookIdAndDeletedFalseOrderBySortOrderAscIdAsc(book.getId());

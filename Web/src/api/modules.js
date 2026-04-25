@@ -41,6 +41,14 @@ export const bookApi = {
   create(payload) {
     return http.post("/books", payload);
   },
+  createSystem(payload) {
+    return http.post("/books/system", payload);
+  },
+  importSystem(bookKey) {
+    return http.post("/books/system/import", null, {
+      params: bookKey ? { bookKey } : {}
+    });
+  },
   detail(bookId) {
     return http.get(`/books/${bookId}`);
   },
