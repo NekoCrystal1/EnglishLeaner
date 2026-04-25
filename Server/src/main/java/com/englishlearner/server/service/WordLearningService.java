@@ -43,6 +43,9 @@ import java.util.stream.Collectors;
 @Service
 public class WordLearningService {
     private static final int CORRECT_SCORE = 10;
+    private static final double MIN_EASE_FACTOR = 1.3;
+    private static final double MAX_EASE_FACTOR = 3.0;
+    private static final int MAX_INTERVAL_DAYS = 365;
 
     private final UserAccountRepository userAccountRepository;
     private final BookRepository bookRepository;
@@ -91,7 +94,7 @@ public class WordLearningService {
         plan.setDailyNewCount(request.dailyNewCount() == null ? 10 : request.dailyNewCount());
         plan.setDailyReviewCount(request.dailyReviewCount() == null ? 20 : request.dailyReviewCount());
         plan.setCurrentPosition(0);
-        plan.setReviewAlgorithm("SM2_SIMPLE");
+        plan.setReviewAlgorithm("SM2_ADAPTIVE");
         plan.setStatus("ACTIVE");
         UserWordPlan saved = userWordPlanRepository.save(plan);
         return toPlanResponse(saved, book);
@@ -159,16 +162,25 @@ public class WordLearningService {
         );
         items.addAll(toReviewItems(reviewStates));
 
-        int remainingNew = Math.max(0, plan.getDailyNewCount() - items.size());
-        if (remainingNew > 0) {
-            List<BookWord> newRelations = bookWordRepository
-                    .findByBookIdAndSortOrderGreaterThanAndDeletedFalseOrderBySortOrderAscIdAsc(
-                            plan.getBookId(),
-                            plan.getCurrentPosition(),
-                            PageRequest.of(0, remainingNew));
+        int newCount = newWordsRemainingToday(userId, plan);
+        if (newCount > 0) {
+            List<BookWord> newRelations = bookWordRepository.findUnseenWords(
+                    userId,
+                    plan.getId(),
+                    plan.getBookId(),
+                    PageRequest.of(0, newCount));
             items.addAll(toNewItems(newRelations));
         }
         return items;
+    }
+
+    private int newWordsRemainingToday(Long userId, UserWordPlan plan) {
+        int dailyNewCount = Math.max(0, plan.getDailyNewCount());
+        int learnedToday = dailyStudySummaryRepository
+                .findByUserIdAndStudyDateAndDeletedFalse(userId, LocalDate.now())
+                .map(DailyStudySummary::getNewWords)
+                .orElse(0);
+        return Math.max(0, dailyNewCount - learnedToday);
     }
 
     @Transactional
@@ -176,14 +188,15 @@ public class WordLearningService {
         UserWordPlan plan = resolvePlan(userId, request.planId());
         VocabularyWord word = vocabularyWordRepository.findByIdAndDeletedFalse(request.wordId())
                 .orElseThrow(() -> BusinessException.notFound("word not found"));
-        String activityType = defaultValue(request.activityType(), "REVIEW").toUpperCase();
+        String activityType = normalizeActivityType(defaultValue(request.activityType(), "REVIEW"));
+        int quality = normalizeQuality(request.quality(), request.correct());
         return recordWordAnswer(
                 userId,
                 plan,
                 word,
                 activityType,
                 request.selectedAnswer(),
-                request.correct(),
+                quality,
                 request.durationMs(),
                 request.clientEventId());
     }
@@ -193,7 +206,7 @@ public class WordLearningService {
                                                    VocabularyWord word,
                                                    String selectedAnswer,
                                                    boolean correct) {
-        return recordWordAnswer(userId, null, word, "QUIZ", selectedAnswer, correct, null, null);
+        return recordWordAnswer(userId, null, word, "QUIZ", selectedAnswer, normalizeQuality(null, correct), null, null);
     }
 
     public DailyStudySummaryResponse getTodaySummary(Long userId) {
@@ -208,7 +221,7 @@ public class WordLearningService {
                                                     VocabularyWord word,
                                                     String activityType,
                                                     String selectedAnswer,
-                                                    boolean correct,
+                                                    int quality,
                                                     Integer durationMs,
                                                     String clientEventId) {
         // clientEventId 用于保证重试幂等，适配客户端超时后的重复提交。
@@ -234,6 +247,7 @@ public class WordLearningService {
         }
 
         UserAccount user = findUser(userId);
+        boolean correct = quality >= 3;
         int scoreDelta = correct ? CORRECT_SCORE : 0;
 
         WordStudyEvent event = new WordStudyEvent();
@@ -247,11 +261,12 @@ public class WordLearningService {
         event.setScoreDelta(scoreDelta);
         event.setDurationMs(durationMs);
         event.setClientEventId(trimToNull(clientEventId));
+        event.setExtJson("{\"quality\":" + quality + "}");
         WordStudyEvent savedEvent = wordStudyEventRepository.save(event);
 
         UserWordState state = null;
         if (plan != null) {
-            state = updateWordState(userId, plan, word.getId(), correct);
+            state = updateWordState(userId, plan, word.getId(), quality);
             updatePlanPosition(plan, word.getId());
         }
 
@@ -281,7 +296,7 @@ public class WordLearningService {
                 state == null ? null : state.getNextReviewAt());
     }
 
-    private UserWordState updateWordState(Long userId, UserWordPlan plan, Long wordId, boolean correct) {
+    private UserWordState updateWordState(Long userId, UserWordPlan plan, Long wordId, int quality) {
         LocalDateTime now = LocalDateTime.now();
         UserWordState state = userWordStateRepository
                 .findByUserIdAndPlanIdAndWordIdAndDeletedFalse(userId, plan.getId(), wordId)
@@ -296,43 +311,68 @@ public class WordLearningService {
                     return created;
                 });
 
-        // 简化版 SM-2 状态更新：答对提高掌握度和间隔，答错则尽快重新复习。
+        boolean correct = quality >= 3;
+        double nextEaseFactor = nextEaseFactor(state.getEaseFactor(), quality);
+        int previousIntervalDays = state.getIntervalDays() == null ? 0 : state.getIntervalDays();
+
         state.setExposureCount(state.getExposureCount() + 1);
         state.setLastAnsweredAt(now);
+        state.setEaseFactor(nextEaseFactor);
         if (correct) {
             state.setCorrectCount(state.getCorrectCount() + 1);
-            state.setMasteryLevel(Math.min(5, state.getMasteryLevel() + 1));
-            state.setIntervalDays(nextIntervalDays(state));
+            state.setMasteryLevel(nextMasteryLevel(state.getMasteryLevel(), quality, previousIntervalDays));
+            state.setIntervalDays(nextIntervalDays(previousIntervalDays, nextEaseFactor, quality));
             state.setState(state.getMasteryLevel() >= 5 ? "MASTERED" : "REVIEWING");
             state.setNextReviewAt(now.plusDays(state.getIntervalDays()));
-            state.setEaseFactor(Math.min(3.0, state.getEaseFactor() + 0.1));
         } else {
             state.setWrongCount(state.getWrongCount() + 1);
-            state.setMasteryLevel(Math.max(0, state.getMasteryLevel() - 1));
+            state.setMasteryLevel(Math.max(0, state.getMasteryLevel() - (quality <= 1 ? 2 : 1)));
             state.setIntervalDays(0);
             state.setState("LEARNING");
-            state.setNextReviewAt(now.plusMinutes(30));
-            state.setEaseFactor(Math.max(1.3, state.getEaseFactor() - 0.2));
+            state.setNextReviewAt(now.plusMinutes(learningDelayMinutes(quality)));
         }
         state.setSyncVersion(state.getSyncVersion() + 1);
         return userWordStateRepository.save(state);
     }
 
-    private int nextIntervalDays(UserWordState state) {
-        int mastery = state.getMasteryLevel();
-        if (mastery <= 1) {
-            return 1;
+    private int nextIntervalDays(int previousIntervalDays, double easeFactor, int quality) {
+        if (previousIntervalDays <= 0) {
+            return quality >= 5 ? 2 : 1;
         }
-        if (mastery == 2) {
-            return 2;
+        if (previousIntervalDays == 1) {
+            if (quality >= 5) {
+                return 6;
+            }
+            return quality == 4 ? 4 : 2;
         }
-        if (mastery == 3) {
-            return 4;
+
+        double qualityMultiplier = switch (quality) {
+            case 3 -> 0.75;
+            case 5 -> 1.25;
+            default -> 1.0;
+        };
+        int interval = (int) Math.round(previousIntervalDays * easeFactor * qualityMultiplier);
+        return Math.max(previousIntervalDays + 1, Math.min(MAX_INTERVAL_DAYS, interval));
+    }
+
+    private double nextEaseFactor(Double currentEaseFactor, int quality) {
+        double current = currentEaseFactor == null ? 2.5 : currentEaseFactor;
+        double adjusted = current + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
+        return Math.max(MIN_EASE_FACTOR, Math.min(MAX_EASE_FACTOR, adjusted));
+    }
+
+    private int nextMasteryLevel(Integer currentMasteryLevel, int quality, int previousIntervalDays) {
+        int current = currentMasteryLevel == null ? 0 : currentMasteryLevel;
+        int intervalBonus = previousIntervalDays >= 14 ? 1 : 0;
+        int qualityBonus = quality >= 5 ? 2 : 1;
+        return Math.min(5, current + qualityBonus + intervalBonus);
+    }
+
+    private int learningDelayMinutes(int quality) {
+        if (quality <= 1) {
+            return 10;
         }
-        if (mastery == 4) {
-            return 7;
-        }
-        return 15;
+        return 30;
     }
 
     private void updatePlanPosition(UserWordPlan plan, Long wordId) {
@@ -502,6 +542,22 @@ public class WordLearningService {
                 summary.getStudySeconds(),
                 summary.getScoreDelta(),
                 summary.getCompletedTasks());
+    }
+
+    private String normalizeActivityType(String activityType) {
+        String normalized = defaultValue(activityType, "REVIEW").toUpperCase();
+        return switch (normalized) {
+            case "WORD_NEW", "NEW_WORD", "LEARN" -> "NEW";
+            case "WORD_REVIEW", "REVIEW_WORD", "LEARNING" -> "REVIEW";
+            default -> normalized;
+        };
+    }
+
+    private int normalizeQuality(Integer quality, Boolean correct) {
+        if (quality != null) {
+            return Math.max(0, Math.min(5, quality));
+        }
+        return Boolean.TRUE.equals(correct) ? 4 : 2;
     }
 
     private String defaultValue(String value, String fallback) {

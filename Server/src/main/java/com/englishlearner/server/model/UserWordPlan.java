@@ -26,7 +26,7 @@ public class UserWordPlan extends BaseEntity {
     private Integer currentPosition = 0;
 
     @Column(name = "review_algorithm", nullable = false, length = 32)
-    private String reviewAlgorithm = "SM2_SIMPLE";
+    private String reviewAlgorithm = "SM2_ADAPTIVE";
 
     @Column(name = "started_on", nullable = false)
     private LocalDate startedOn;

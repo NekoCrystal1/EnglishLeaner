@@ -1,6 +1,8 @@
 package com.englishlearner.server.dto.word;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 
 public record SubmitWordStudyEventRequest(
@@ -17,6 +19,10 @@ public record SubmitWordStudyEventRequest(
 
         @NotNull(message = "correct is required")
         Boolean correct,
+
+        @Min(value = 0, message = "quality must be between 0 and 5")
+        @Max(value = 5, message = "quality must be between 0 and 5")
+        Integer quality,
 
         Integer durationMs,
 
