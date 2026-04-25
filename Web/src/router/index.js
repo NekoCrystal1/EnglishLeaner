@@ -8,6 +8,7 @@ const WordsPage = () => import("../pages/WordsPage.vue");
 const QuizPage = () => import("../pages/QuizPage.vue");
 const RankingPage = () => import("../pages/RankingPage.vue");
 const AdminPage = () => import("../pages/AdminPage.vue");
+const LearningPlaceholderPage = () => import("../pages/LearningPlaceholderPage.vue");
 
 export const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -41,6 +42,51 @@ export const router = createRouter({
           path: "ranking",
           name: "ranking",
           component: RankingPage
+        },
+        {
+          path: "reading",
+          name: "reading",
+          component: LearningPlaceholderPage
+        },
+        {
+          path: "listening",
+          name: "listening",
+          component: LearningPlaceholderPage
+        },
+        {
+          path: "speaking",
+          name: "speaking",
+          component: LearningPlaceholderPage
+        },
+        {
+          path: "wrong-answers",
+          name: "wrong-answers",
+          component: LearningPlaceholderPage
+        },
+        {
+          path: "favorites",
+          name: "favorites",
+          component: LearningPlaceholderPage
+        },
+        {
+          path: "checkin",
+          name: "checkin",
+          component: LearningPlaceholderPage
+        },
+        {
+          path: "achievements",
+          name: "achievements",
+          component: LearningPlaceholderPage
+        },
+        {
+          path: "groups",
+          name: "groups",
+          component: LearningPlaceholderPage
+        },
+        {
+          path: "ai",
+          name: "ai",
+          component: LearningPlaceholderPage
         },
         {
           path: "admin",

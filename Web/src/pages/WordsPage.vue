@@ -8,7 +8,10 @@
           正确率 {{ todayAccuracy }}%
         </p>
       </div>
-      <el-button :icon="RefreshRight" :loading="refreshing" @click="loadData">刷新</el-button>
+      <div class="head-actions">
+        <el-button :icon="Setting" @click="planDrawerVisible = true">计划设置</el-button>
+        <el-button :icon="RefreshRight" :loading="refreshing" @click="loadData">刷新</el-button>
+      </div>
     </section>
 
     <section class="overview-grid">
@@ -87,17 +90,17 @@
           <el-button type="primary" plain :icon="RefreshRight" @click="loadDueWords">重新检查</el-button>
         </div>
       </el-card>
+    </section>
 
-      <div class="side-stack">
-        <el-card v-loading="loadingPlans" shadow="never">
-          <template #header>
-            <div class="card-header">
-              <span>当前计划</span>
-              <el-tag v-if="currentPlan" :type="planStatusType(currentPlan.status)" effect="light">
-                {{ planStatusLabel(currentPlan.status) }}
-              </el-tag>
-            </div>
-          </template>
+    <el-drawer v-model="planDrawerVisible" title="计划设置" size="420px">
+      <div class="drawer-stack">
+        <section class="drawer-panel" v-loading="loadingPlans">
+          <div class="drawer-panel-head">
+            <span>当前计划</span>
+            <el-tag v-if="currentPlan" :type="planStatusType(currentPlan.status)" effect="light">
+              {{ planStatusLabel(currentPlan.status) }}
+            </el-tag>
+          </div>
 
           <template v-if="currentPlan">
             <div class="plan-title">{{ currentPlan.bookTitle }}</div>
@@ -124,19 +127,19 @@
           </template>
 
           <el-empty v-else description="暂无学习计划" />
-        </el-card>
+        </section>
 
-        <el-card v-loading="loadingBooks" shadow="never">
-          <template #header>
+        <section class="drawer-panel" v-loading="loadingBooks">
+          <div class="drawer-panel-head">
             <span>创建计划</span>
-          </template>
+          </div>
           <el-form label-position="top">
             <el-form-item label="词书">
               <el-select v-model="selectedBookId" placeholder="请选择词书" class="full-width">
                 <el-option
                   v-for="book in books"
                   :key="book.bookId"
-                  :label="`${book.title}（${book.itemCount ?? 0}词）`"
+                  :label="`${book.title}（${book.itemCount ?? 0} 词）`"
                   :value="book.bookId"
                 />
               </el-select>
@@ -151,9 +154,9 @@
             </div>
             <el-button type="primary" :loading="creating" @click="createPlan">创建并启用</el-button>
           </el-form>
-        </el-card>
+        </section>
       </div>
-    </section>
+    </el-drawer>
   </div>
 </template>
 
@@ -179,6 +182,7 @@ const showAnswer = ref(false);
 const cardStartedAt = ref(Date.now());
 const completedInSession = ref(0);
 const correctInSession = ref(0);
+const planDrawerVisible = ref(false);
 
 const loadingBooks = ref(false);
 const loadingPlans = ref(false);
@@ -279,6 +283,7 @@ async function createPlan() {
       dailyReviewCount: dailyReviewCount.value
     });
     ElMessage.success("学习计划已创建");
+    planDrawerVisible.value = false;
     await loadPlans();
     await loadDueWords();
   } catch (error) {
@@ -299,6 +304,7 @@ async function savePlan() {
       dailyReviewCount: planDailyReviewCount.value
     });
     ElMessage.success("计划已更新");
+    planDrawerVisible.value = false;
     await loadPlans();
     await loadDueWords();
   } catch (error) {
@@ -449,6 +455,13 @@ onMounted(loadData);
   gap: 16px;
 }
 
+.head-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .overview-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -479,18 +492,17 @@ onMounted(loadData);
 
 .learn-workspace {
   display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(320px, 0.9fr);
-  gap: 16px;
-  align-items: start;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .study-panel {
-  min-height: 540px;
+  min-height: 560px;
 }
 
 .card-header,
 .card-status,
-.plan-meta {
+.plan-meta,
+.drawer-panel-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -498,7 +510,7 @@ onMounted(loadData);
 }
 
 .study-card {
-  min-height: 440px;
+  min-height: 460px;
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -517,7 +529,7 @@ onMounted(loadData);
 .word-face h2 {
   margin: 0;
   color: #0f172a;
-  font-size: 52px;
+  font-size: 56px;
   line-height: 1.1;
   font-weight: 800;
   letter-spacing: 0;
@@ -585,10 +597,22 @@ onMounted(loadData);
   place-items: center;
 }
 
-.side-stack {
-  display: flex;
-  flex-direction: column;
+.drawer-stack {
+  display: grid;
   gap: 16px;
+}
+
+.drawer-panel {
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.drawer-panel-head {
+  margin-bottom: 14px;
+  color: #111827;
+  font-weight: 800;
 }
 
 .plan-title {
@@ -619,15 +643,14 @@ onMounted(loadData);
   width: 100%;
 }
 
-@media (max-width: 1080px) {
-  .learn-workspace {
-    grid-template-columns: 1fr;
-  }
-}
-
 @media (max-width: 720px) {
   .page-head {
     flex-direction: column;
+  }
+
+  .head-actions {
+    width: 100%;
+    justify-content: flex-start;
   }
 
   .overview-grid,
