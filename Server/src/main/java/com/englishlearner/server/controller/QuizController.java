@@ -26,6 +26,7 @@ public class QuizController {
 
     @GetMapping("/next")
     public ApiResponse<QuizQuestionResponse> next() {
+        // 当前题目从全局单词表中抽取，不依赖用户学习状态。
         return ApiResponse.ok(quizService.nextQuestion());
     }
 

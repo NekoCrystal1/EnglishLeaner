@@ -8,6 +8,7 @@ public record ApiResponse<T>(
         T data,
         Instant timestamp
 ) {
+    /** Controller 统一使用的成功响应包装。 */
     public static <T> ApiResponse<T> ok(T data) {
         return new ApiResponse<>(true, "OK", data, Instant.now());
     }

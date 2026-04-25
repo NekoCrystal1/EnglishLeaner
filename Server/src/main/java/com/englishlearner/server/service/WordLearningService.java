@@ -78,6 +78,7 @@ public class WordLearningService {
     public WordPlanResponse createPlan(Long userId, CreateWordPlanRequest request) {
         Book book = findVisibleWordBook(userId, request.bookId());
 
+        // 同一用户只保留一个激活中的单词计划；创建新计划前先暂停旧计划。
         userWordPlanRepository.findFirstByUserIdAndStatusAndDeletedFalseOrderByIdDesc(userId, "ACTIVE")
                 .ifPresent(active -> {
                     active.setStatus("PAUSED");
@@ -149,6 +150,7 @@ public class WordLearningService {
         LocalDateTime now = LocalDateTime.now();
         List<WordLearningItemResponse> items = new ArrayList<>();
 
+        // 复习额度优先，避免过期复习词被当天新词目标挤掉。
         List<UserWordState> reviewStates = userWordStateRepository.findDueReviewStates(
                 userId,
                 plan.getId(),
@@ -209,6 +211,7 @@ public class WordLearningService {
                                                     boolean correct,
                                                     Integer durationMs,
                                                     String clientEventId) {
+        // clientEventId 用于保证重试幂等，适配客户端超时后的重复提交。
         if (clientEventId != null && !clientEventId.isBlank()) {
             Optional<WordStudyEvent> existing = wordStudyEventRepository
                     .findByUserIdAndClientEventIdAndDeletedFalse(userId, clientEventId.trim());
@@ -293,6 +296,7 @@ public class WordLearningService {
                     return created;
                 });
 
+        // 简化版 SM-2 状态更新：答对提高掌握度和间隔，答错则尽快重新复习。
         state.setExposureCount(state.getExposureCount() + 1);
         state.setLastAnsweredAt(now);
         if (correct) {

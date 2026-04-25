@@ -30,6 +30,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 
+        // 有效的 Bearer token 会被转换为 Spring Security 认证对象，供后续 Controller 使用。
         if (authHeader != null
                 && authHeader.startsWith("Bearer ")
                 && SecurityContextHolder.getContext().getAuthentication() == null) {

@@ -40,6 +40,7 @@ public class QuizService {
     }
 
     public QuizQuestionResponse nextQuestion() {
+        // 使用随机偏移保持接口简单，同时让题目分布到整个单词表。
         long total = vocabularyWordRepository.countByDeletedFalse();
         if (total == 0L) {
             throw BusinessException.notFound("no vocabulary available");
@@ -95,6 +96,7 @@ public class QuizService {
     }
 
     private List<String> buildOptions(VocabularyWord vocabulary) {
+        // 选项始终包含正确答案，再用其他单词的唯一翻译补足。
         Set<String> unique = new LinkedHashSet<>();
         addIfNotBlank(unique, vocabulary.getTranslation());
 

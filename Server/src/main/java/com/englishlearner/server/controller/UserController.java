@@ -21,6 +21,7 @@ public class UserController {
 
     @GetMapping("/me")
     public ApiResponse<UserProfileResponse> me(Authentication authentication) {
+        // JWT 过滤器会把解析出的用户放到 Authentication.principal 中。
         if (authentication == null || !(authentication.getPrincipal() instanceof AuthenticatedUser authUser)) {
             throw BusinessException.unauthorized("请先登录");
         }

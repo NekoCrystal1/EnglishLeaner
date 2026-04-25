@@ -26,6 +26,7 @@ public class JwtService {
 
     @PostConstruct
     public void init() {
+        // HS256 需要足够长度的密钥；启动时快速失败，避免使用弱 JWT 密钥运行。
         byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
         if (keyBytes.length < 32) {
             throw new IllegalStateException("JWT 密钥长度必须 >= 32 字节");
@@ -48,6 +49,7 @@ public class JwtService {
 
     public Optional<AuthenticatedUser> parseToken(String token) {
         try {
+            // 格式错误、过期或被篡改的 token 会被当作匿名请求处理。
             Claims claims = Jwts.parserBuilder()
                     .setSigningKey(secretKey)
                     .build()

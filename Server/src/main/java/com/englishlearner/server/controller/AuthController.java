@@ -23,6 +23,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public ApiResponse<UserProfileResponse> register(@Valid @RequestBody RegisterRequest request) {
+        // Controller 保持轻量：注解负责参数校验，业务规则交给 AuthService。
         return ApiResponse.ok("register success", authService.register(request));
     }
 
